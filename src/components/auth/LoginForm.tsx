@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getSafeRedirectPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -15,30 +16,36 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  function getRedirectTarget() {
+    return getSafeRedirectPath(
+      new URLSearchParams(window.location.search).get("next"),
+    );
+  }
+
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
 
     if (error) {
-      setError(error.message);
+      setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
       setLoading(false);
       return;
     }
 
-    router.push("/dashboard");
+    router.push(getRedirectTarget());
     router.refresh();
   }
 
   return (
     <div className="bg-card border rounded-xl p-8 shadow-sm space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold ">เข้าสู่ระบบ</h1>
+        <h1 className="text-2xl font-semibold">เข้าสู่ระบบ</h1>
         <p className="text-sm text-muted-foreground">ยินดีต้อนรับกลับมา</p>
       </div>
 
@@ -46,17 +53,21 @@ export function LoginForm() {
         {error && <ErrorMessage message={error} />}
         <Field
           label="อีเมล"
+          name="email"
           type="email"
           value={email}
           onChange={setEmail}
           placeholder="your@email.com"
+          autoComplete="email"
         />
         <Field
           label="รหัสผ่าน"
+          name="password"
           type="password"
           value={password}
           onChange={setPassword}
           placeholder="••••••••"
+          autoComplete="current-password"
         />
         <SubmitButton
           loading={loading}
@@ -67,7 +78,11 @@ export function LoginForm() {
 
       <Divider />
 
-      <GoogleLogin label="เข้าสู่ระบบด้วย Google" />
+      <GoogleLogin
+        label="เข้าสู่ระบบด้วย Google"
+        getRedirectTarget={getRedirectTarget}
+        onError={setError}
+      />
 
       <p className="text-center text-sm text-muted-foreground">
         ยังไม่มีบัญชี?{" "}

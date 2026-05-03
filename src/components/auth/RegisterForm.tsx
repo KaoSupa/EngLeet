@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { getSafeRedirectPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { SubmitButton, Divider, Field, ErrorMessage } from "./UI";
+import {
+  SubmitButton,
+  Divider,
+  Field,
+  ErrorMessage,
+  SuccessMessage,
+} from "./UI";
 import GoogleLogin from "./GoogleLogin";
 
 export function RegisterForm() {
@@ -14,11 +21,26 @@ export function RegisterForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function getRedirectTarget() {
+    return getSafeRedirectPath(
+      new URLSearchParams(window.location.search).get("next"),
+    );
+  }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccess("");
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail.includes("@")) {
+      setError("อีเมลไม่ถูกต้อง");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("รหัสผ่านไม่ตรงกัน");
@@ -32,11 +54,12 @@ export function RegisterForm() {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email,
+    const redirectTo = getRedirectTarget();
+    const { data, error } = await supabase.auth.signUp({
+      email: trimmedEmail,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
       },
     });
 
@@ -46,7 +69,16 @@ export function RegisterForm() {
       return;
     }
 
-    router.push("/login?message=check_email");
+    if (data.session) {
+      router.push(redirectTo);
+      router.refresh();
+      return;
+    }
+
+    setSuccess("สมัครสมาชิกสำเร็จ โปรดตรวจสอบอีเมลเพื่อยืนยันบัญชี");
+    setPassword("");
+    setConfirmPassword("");
+    setLoading(false);
   }
 
   return (
@@ -60,26 +92,33 @@ export function RegisterForm() {
 
       <form onSubmit={handleRegister} className="space-y-4">
         {error && <ErrorMessage message={error} />}
+        {success && <SuccessMessage message={success} />}
         <Field
           label="อีเมล"
+          name="email"
           type="email"
           value={email}
           onChange={setEmail}
           placeholder="your@email.com"
+          autoComplete="email"
         />
         <Field
           label="รหัสผ่าน"
+          name="new-password"
           type="password"
           value={password}
           onChange={setPassword}
           placeholder="อย่างน้อย 8 ตัวอักษร"
+          autoComplete="new-password"
         />
         <Field
           label="ยืนยันรหัสผ่าน"
+          name="confirm-password"
           type="password"
           value={confirmPassword}
           onChange={setConfirmPassword}
           placeholder="••••••••"
+          autoComplete="new-password"
         />
         <SubmitButton
           loading={loading}
@@ -90,7 +129,11 @@ export function RegisterForm() {
 
       <Divider />
 
-      <GoogleLogin label="สมัครด้วย Google" />
+      <GoogleLogin
+        label="สมัครด้วย Google"
+        getRedirectTarget={getRedirectTarget}
+        onError={setError}
+      />
 
       <p className="text-center text-sm text-muted-foreground">
         มีบัญชีแล้ว?{" "}
