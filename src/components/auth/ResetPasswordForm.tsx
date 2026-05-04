@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ErrorMessage, Field, SubmitButton, SuccessMessage } from "./UI";
 
 export function ResetPasswordForm() {
+  const router = useRouter();
   const supabase = createClient();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
@@ -43,9 +44,10 @@ export function ResetPasswordForm() {
       return;
     }
 
-    setPassword("");
-    setConfirmPassword("");
-    setSuccess("ตั้งรหัสผ่านใหม่สำเร็จ คุณสามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้แล้ว");
+    await supabase.auth.signOut();
+    setSuccess("ตั้งรหัสผ่านใหม่สำเร็จ");
+    router.replace("/login?password_reset=success");
+    router.refresh();
   }
 
   return (

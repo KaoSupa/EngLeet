@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { getPostAuthRedirect } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { SubmitButton, Divider, Field, ErrorMessage } from "./UI";
+import { SubmitButton, Divider, Field, ErrorMessage, SuccessMessage } from "./UI";
 import GoogleLogin from "./GoogleLogin";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +18,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   function getRequestedRedirect() {
-    return new URLSearchParams(window.location.search).get("next");
+    return searchParams.get("next");
   }
 
   async function getRedirectAfterLogin() {
@@ -57,6 +58,9 @@ export function LoginForm() {
       </div>
 
       <form onSubmit={handleEmailLogin} className="space-y-4">
+        {searchParams.get("password_reset") === "success" && (
+          <SuccessMessage message="ตั้งรหัสผ่านใหม่สำเร็จแล้ว โปรดเข้าสู่ระบบอีกครั้ง" />
+        )}
         {error && <ErrorMessage message={error} />}
         <Field
           label="อีเมล"

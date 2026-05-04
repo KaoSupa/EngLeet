@@ -2,15 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ErrorMessage, Field, SubmitButton, SuccessMessage } from "./UI";
 
 export function ForgotPasswordForm() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const linkError = {
+    invalid_reset_link: "ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้อง โปรดขอลิงก์ใหม่อีกครั้ง",
+    reset_link_expired:
+      "ลิงก์รีเซ็ตรหัสผ่านหมดอายุหรือถูกใช้ไปแล้ว โปรดขอลิงก์ใหม่อีกครั้ง",
+    reset_session_required:
+      "โปรดเปิดลิงก์จากอีเมลรีเซ็ตรหัสผ่านก่อนตั้งรหัสผ่านใหม่",
+  }[searchParams.get("error") ?? ""];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +49,7 @@ export function ForgotPasswordForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <ErrorMessage message={error} />}
+        {(error || linkError) && <ErrorMessage message={error || linkError || ""} />}
         {success && <SuccessMessage message={success} />}
         <Field
           label="อีเมล"

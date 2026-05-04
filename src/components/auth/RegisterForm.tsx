@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { getPostAuthRedirect } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   SubmitButton,
@@ -16,6 +16,7 @@ import GoogleLogin from "./GoogleLogin";
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +26,7 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
 
   function getRequestedRedirect() {
-    return new URLSearchParams(window.location.search).get("next");
+    return searchParams.get("next");
   }
 
   async function getRedirectAfterRegister() {
