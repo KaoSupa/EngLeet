@@ -21,19 +21,15 @@ export function LoginForm() {
     return searchParams.get("next");
   }
 
-  async function getRedirectAfterLogin() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+  async function getRedirectAfterLogin(userId: string | undefined) {
+    if (!userId) {
       return getPostAuthRedirect(getRequestedRedirect(), null);
     }
 
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
+      .eq("id", userId)
       .maybeSingle();
 
     return getPostAuthRedirect(getRequestedRedirect(), profile?.role);
@@ -44,7 +40,7 @@ export function LoginForm() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -55,8 +51,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push(await getRedirectAfterLogin());
-    router.refresh();
+    router.push(await getRedirectAfterLogin(data.user?.id));
   }
 
   return (

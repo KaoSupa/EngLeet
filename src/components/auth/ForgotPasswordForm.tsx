@@ -27,7 +27,13 @@ export function ForgotPasswordForm() {
     setSuccess("");
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+    const redirectTo = new URL(
+      "/auth/reset-password/confirm",
+      window.location.origin,
+    );
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: redirectTo.toString(),
+    });
 
     setLoading(false);
 

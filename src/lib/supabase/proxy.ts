@@ -19,9 +19,34 @@ function matchesRoute(pathname: string, routes: string[]) {
   );
 }
 
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies
+    .getAll()
+    .some(
+      ({ name }) => name.startsWith("sb-") && name.includes("-auth-token"),
+    );
+}
+
+function getStringClaim(
+  claims: Record<string, unknown> | undefined,
+  key: string,
+) {
+  const value = claims?.[key];
+
+  return typeof value === "string" ? value : null;
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const { pathname, search } = request.nextUrl;
+  const isAuthRoute = matchesRoute(pathname, authRoutes);
+  const isProtectedRoute = matchesRoute(pathname, protectedRoutes);
+  const shouldCheckSession =
+    isProtectedRoute || (isAuthRoute && hasSupabaseAuthCookie(request));
+
+  if (!shouldCheckSession) {
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,26 +69,26 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims as Record<string, unknown> | undefined;
+  const userId = error ? null : getStringClaim(claims, "sub");
 
-  if (!user && matchesRoute(pathname, protectedRoutes)) {
+  if (!userId && isProtectedRoute) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", getSafeRedirectPath(`${pathname}${search}`));
     return NextResponse.redirect(loginUrl);
   }
 
   if (
-    user &&
+    userId &&
     (matchesRoute(pathname, adminRoutes) ||
-      matchesRoute(pathname, authRoutes) ||
+      isAuthRoute ||
       matchesRoute(pathname, userDashboardRoutes))
   ) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
+      .eq("id", userId)
       .maybeSingle();
 
     if (matchesRoute(pathname, adminRoutes) && profile?.role !== "admin") {
@@ -77,7 +102,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(new URL(ADMIN_AUTH_REDIRECT, request.url));
     }
 
-    if (matchesRoute(pathname, authRoutes)) {
+    if (isAuthRoute) {
       const next = getPostAuthRedirect(
         request.nextUrl.searchParams.get("next"),
         profile?.role,

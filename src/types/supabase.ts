@@ -139,6 +139,7 @@ export type Database = {
       lessons: {
         Row: {
           category: Database["public"]["Enums"]["lesson_category"]
+          cefr_level: Database["public"]["Enums"]["cefr_level"] | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -147,6 +148,7 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           order_index: number
+          passing_score: number
           published_at: string | null
           slug: string
           status: Database["public"]["Enums"]["content_status"]
@@ -158,6 +160,7 @@ export type Database = {
         }
         Insert: {
           category: Database["public"]["Enums"]["lesson_category"]
+          cefr_level?: Database["public"]["Enums"]["cefr_level"] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -166,6 +169,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           order_index?: number
+          passing_score?: number
           published_at?: string | null
           slug: string
           status?: Database["public"]["Enums"]["content_status"]
@@ -177,6 +181,7 @@ export type Database = {
         }
         Update: {
           category?: Database["public"]["Enums"]["lesson_category"]
+          cefr_level?: Database["public"]["Enums"]["cefr_level"] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -185,6 +190,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           order_index?: number
+          passing_score?: number
           published_at?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["content_status"]
@@ -216,6 +222,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           id: string
           onboarding_completed: boolean
           preferred_cefr_level: Database["public"]["Enums"]["cefr_level"] | null
@@ -228,6 +235,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id: string
           onboarding_completed?: boolean
           preferred_cefr_level?:
@@ -242,6 +250,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           onboarding_completed?: boolean
           preferred_cefr_level?:
@@ -743,6 +752,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          dedupe_date: string | null
           description: string | null
           id: string
           reference_id: string | null
@@ -752,6 +762,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          dedupe_date?: string | null
           description?: string | null
           id?: string
           reference_id?: string | null
@@ -761,6 +772,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          dedupe_date?: string | null
           description?: string | null
           id?: string
           reference_id?: string | null
@@ -880,7 +892,6 @@ export type Database = {
           xp_earned: number
         }[]
       }
-      is_admin: { Args: { user_id?: string }; Returns: boolean }
       normalize_english: { Args: { value: string }; Returns: string }
       record_activity_internal: {
         Args: {
@@ -895,6 +906,19 @@ export type Database = {
         Returns: undefined
       }
       save_vocabulary: { Args: { p_vocabulary_id: string }; Returns: undefined }
+      search_vocabulary: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          cefr_level: Database["public"]["Enums"]["cefr_level"]
+          definition: string
+          definition_th: string
+          id: string
+          part_of_speech: Database["public"]["Enums"]["part_of_speech"]
+          phonetic: string
+          similarity: number
+          word: string
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       slugify: { Args: { value: string }; Returns: string }

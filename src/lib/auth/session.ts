@@ -1,16 +1,29 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+function getStringClaim(
+  claims: Record<string, unknown> | undefined,
+  key: string,
+) {
+  const value = claims?.[key];
+
+  return typeof value === "string" ? value : null;
+}
+
 export async function requireUser(next = "/dashboard") {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims as Record<string, unknown> | undefined;
+  const userId = getStringClaim(claims, "sub");
 
-  if (error || !user) {
+  if (error || !userId) {
     redirect(`/login?next=${encodeURIComponent(next)}`);
   }
+
+  const user = {
+    id: userId,
+    email: getStringClaim(claims, "email"),
+  };
 
   return { supabase, user };
 }

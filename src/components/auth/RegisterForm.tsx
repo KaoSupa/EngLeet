@@ -29,19 +29,15 @@ export function RegisterForm() {
     return searchParams.get("next");
   }
 
-  async function getRedirectAfterRegister() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+  async function getRedirectAfterRegister(userId: string | undefined) {
+    if (!userId) {
       return getPostAuthRedirect(getRequestedRedirect(), null);
     }
 
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
+      .eq("id", userId)
       .maybeSingle();
 
     return getPostAuthRedirect(getRequestedRedirect(), profile?.role);
@@ -87,14 +83,15 @@ export function RegisterForm() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(
+        "ไม่สามารถสมัครสมาชิกได้ โปรดตรวจสอบข้อมูลหรือเข้าสู่ระบบหากมีบัญชีอยู่แล้ว",
+      );
       setLoading(false);
       return;
     }
 
     if (data.session) {
-      router.push(await getRedirectAfterRegister());
-      router.refresh();
+      router.push(await getRedirectAfterRegister(data.user?.id));
       return;
     }
 

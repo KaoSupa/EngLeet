@@ -6,11 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function ResetPasswordPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
 
-  if (!user || !(await hasPasswordRecoveryCookie())) {
+  if (!data?.claims.sub || !(await hasPasswordRecoveryCookie())) {
     redirect("/forgot-password?error=reset_session_required");
   }
 
