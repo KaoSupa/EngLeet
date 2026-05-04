@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  PASSWORD_RECOVERY_COOKIE,
+  PASSWORD_RECOVERY_COOKIE_VALUE,
+  PASSWORD_RECOVERY_MAX_AGE_SECONDS,
+} from "@/lib/auth/recovery";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -24,5 +29,18 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(new URL("/reset-password", origin));
+  const response = NextResponse.redirect(new URL("/reset-password", origin));
+  response.cookies.set(
+    PASSWORD_RECOVERY_COOKIE,
+    PASSWORD_RECOVERY_COOKIE_VALUE,
+    {
+      httpOnly: true,
+      maxAge: PASSWORD_RECOVERY_MAX_AGE_SECONDS,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+  );
+
+  return response;
 }

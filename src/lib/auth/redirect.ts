@@ -32,5 +32,16 @@ export function getPostAuthRedirect(
   value: string | null | undefined,
   role: string | null | undefined,
 ) {
-  return getSafeRedirectPath(value, getDefaultRedirectForRole(role));
+  const fallback = getDefaultRedirectForRole(role);
+  const redirectPath = getSafeRedirectPath(value, fallback);
+
+  if (
+    role === "admin" &&
+    (redirectPath === DEFAULT_AUTH_REDIRECT ||
+      redirectPath.startsWith(`${DEFAULT_AUTH_REDIRECT}/`))
+  ) {
+    return ADMIN_AUTH_REDIRECT;
+  }
+
+  return redirectPath;
 }

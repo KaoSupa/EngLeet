@@ -44,7 +44,9 @@ export function ResetPasswordForm() {
       return;
     }
 
-    await supabase.auth.signOut();
+    await fetch("/auth/reset-password/complete", {
+      method: "POST",
+    });
     setSuccess("ตั้งรหัสผ่านใหม่สำเร็จ");
     router.replace("/login?password_reset=success");
     router.refresh();

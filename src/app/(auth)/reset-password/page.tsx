@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+import { hasPasswordRecoveryCookie } from "@/lib/auth/recovery";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ResetPasswordPage() {
@@ -9,7 +10,7 @@ export default async function ResetPasswordPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user || !(await hasPasswordRecoveryCookie())) {
     redirect("/forgot-password?error=reset_session_required");
   }
 
