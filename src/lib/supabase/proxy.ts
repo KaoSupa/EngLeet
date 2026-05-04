@@ -6,6 +6,7 @@ import {
   getSafeRedirectPath,
 } from "@/lib/auth/redirect";
 import { NextResponse, type NextRequest } from "next/server";
+import type { Database } from "@/types/supabase";
 
 const authRoutes = ["/login", "/register", "/forgot-password"];
 const protectedRoutes = ["/dashboard", "/profile", "/settings", "/admin"];
@@ -22,7 +23,7 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const { pathname, search } = request.nextUrl;
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
