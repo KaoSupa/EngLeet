@@ -2,16 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ErrorMessage, Field, SubmitButton, SuccessMessage } from "./UI";
 
 export function ResetPasswordForm() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const linkError =
+    searchParams.get("error_code") === "otp_expired"
+      ? "ลิงก์รีเซ็ตรหัสผ่านหมดอายุหรือถูกใช้ไปแล้ว โปรดขอลิงก์ใหม่อีกครั้ง"
+      : "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +58,7 @@ export function ResetPasswordForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <ErrorMessage message={error} />}
+        {(error || linkError) && <ErrorMessage message={error || linkError} />}
         {success && <SuccessMessage message={success} />}
         <Field
           label="รหัสผ่านใหม่"
@@ -80,9 +86,12 @@ export function ResetPasswordForm() {
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        กลับไป{" "}
-        <Link href="/login" className="text-primary hover:underline font-medium">
-          เข้าสู่ระบบ
+        ต้องการลิงก์ใหม่?{" "}
+        <Link
+          href="/forgot-password"
+          className="text-primary hover:underline font-medium"
+        >
+          ขอรีเซ็ตรหัสผ่านอีกครั้ง
         </Link>
       </p>
     </div>
