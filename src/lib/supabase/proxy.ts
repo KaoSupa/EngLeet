@@ -1,9 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
-import { DEFAULT_AUTH_REDIRECT, getSafeRedirectPath } from "@/lib/auth/redirect";
+import { DEFAULT_AUTH_REDIRECT, getPostAuthRedirect, getSafeRedirectPath } from "@/lib/auth/redirect";
 import { NextResponse, type NextRequest } from "next/server";
 
-const authRoutes = ["/login", "/register"];
-const protectedRoutes = ["/dashboard", "/profile", "/learn", "/settings", "/admin"];
+const authRoutes = ["/login", "/register", "/forgot-password"];
+const protectedRoutes = ["/dashboard", "/profile", "/settings", "/admin"];
 const adminRoutes = ["/admin"];
 
 function matchesRoute(pathname: string, routes: string[]) {
@@ -47,25 +47,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && matchesRoute(pathname, adminRoutes)) {
+  if (user && (matchesRoute(pathname, adminRoutes) || matchesRoute(pathname, authRoutes))) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profile?.role !== "admin") {
+    if (matchesRoute(pathname, adminRoutes) && profile?.role !== "admin") {
       return NextResponse.redirect(new URL(DEFAULT_AUTH_REDIRECT, request.url));
     }
-  }
 
-  if (user && matchesRoute(pathname, authRoutes)) {
-    const next = getSafeRedirectPath(
-      request.nextUrl.searchParams.get("next"),
-      DEFAULT_AUTH_REDIRECT,
-    );
+    if (matchesRoute(pathname, authRoutes)) {
+      const next = getPostAuthRedirect(
+        request.nextUrl.searchParams.get("next"),
+        profile?.role,
+      );
 
-    return NextResponse.redirect(new URL(next, request.url));
+      return NextResponse.redirect(new URL(next, request.url));
+    }
   }
 
   return supabaseResponse;

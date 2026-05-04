@@ -6,13 +6,13 @@ import { GoogleIcon } from "./UI";
 
 interface GoogleLoginProps {
   label: string;
-  getRedirectTarget: () => string;
+  getRequestedRedirect: () => string | null;
   onError: (message: string) => void;
 }
 
 export default function GoogleLogin({
   label,
-  getRedirectTarget,
+  getRequestedRedirect,
   onError,
 }: GoogleLoginProps) {
   const supabase = createClient();
@@ -22,11 +22,17 @@ export default function GoogleLogin({
     setLoading(true);
     onError("");
 
-    const redirectTo = getRedirectTarget();
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    const requestedRedirect = getRequestedRedirect();
+
+    if (requestedRedirect) {
+      callbackUrl.searchParams.set("next", requestedRedirect);
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
+        redirectTo: callbackUrl.toString(),
       },
     });
 

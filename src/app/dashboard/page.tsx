@@ -1,16 +1,7 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/session";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    redirect(`/login?next=${encodeURIComponent("/dashboard")}`);
-  }
+  const { supabase, user } = await requireUser("/dashboard");
 
   const [{ data: profile }, { data: stats }] = await Promise.all([
     supabase
@@ -32,12 +23,24 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-5xl space-y-8">
         <section className="space-y-2">
           <p className="text-sm text-muted-foreground">Dashboard</p>
-          <h1 className="text-3xl font-semibold">
-            สวัสดี {profile?.display_name ?? profile?.username ?? user.email}
-          </h1>
-          <p className="text-muted-foreground">
-            ติดตามความคืบหน้า XP และ streak ของคุณได้จากหน้านี้
-          </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold">
+                สวัสดี {profile?.display_name ?? profile?.username ?? user.email}
+              </h1>
+              <p className="text-muted-foreground">
+                ติดตามความคืบหน้า XP และ streak ของคุณได้จากหน้านี้
+              </p>
+            </div>
+            <form action="/auth/logout" method="post">
+              <button
+                type="submit"
+                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                ออกจากระบบ
+              </button>
+            </form>
+          </div>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

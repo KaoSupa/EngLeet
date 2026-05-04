@@ -1,6 +1,11 @@
 export const DEFAULT_AUTH_REDIRECT = "/dashboard";
+export const ADMIN_AUTH_REDIRECT = "/admin";
 
 const INTERNAL_REDIRECT_BASE = "http://localhost";
+
+export function getDefaultRedirectForRole(role: string | null | undefined) {
+  return role === "admin" ? ADMIN_AUTH_REDIRECT : DEFAULT_AUTH_REDIRECT;
+}
 
 export function getSafeRedirectPath(
   value: string | null | undefined,
@@ -21,4 +26,11 @@ export function getSafeRedirectPath(
   } catch {
     return fallback;
   }
+}
+
+export function getPostAuthRedirect(
+  value: string | null | undefined,
+  role: string | null | undefined,
+) {
+  return getSafeRedirectPath(value, getDefaultRedirectForRole(role));
 }

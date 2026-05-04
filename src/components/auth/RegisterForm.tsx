@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getSafeRedirectPath } from "@/lib/auth/redirect";
+import { getPostAuthRedirect } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -24,10 +24,17 @@ export function RegisterForm() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function getRedirectTarget() {
-    return getSafeRedirectPath(
-      new URLSearchParams(window.location.search).get("next"),
-    );
+  function getRequestedRedirect() {
+    return new URLSearchParams(window.location.search).get("next");
+  }
+
+  async function getRedirectAfterRegister() {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .maybeSingle();
+
+    return getPostAuthRedirect(getRequestedRedirect(), profile?.role);
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -54,12 +61,18 @@ export function RegisterForm() {
 
     setLoading(true);
 
-    const redirectTo = getRedirectTarget();
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    const requestedRedirect = getRequestedRedirect();
+
+    if (requestedRedirect) {
+      callbackUrl.searchParams.set("next", requestedRedirect);
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: trimmedEmail,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
+        emailRedirectTo: callbackUrl.toString(),
       },
     });
 
@@ -70,7 +83,7 @@ export function RegisterForm() {
     }
 
     if (data.session) {
-      router.push(redirectTo);
+      router.push(await getRedirectAfterRegister());
       router.refresh();
       return;
     }
@@ -131,7 +144,7 @@ export function RegisterForm() {
 
       <GoogleLogin
         label="สมัครด้วย Google"
-        getRedirectTarget={getRedirectTarget}
+        getRequestedRedirect={getRequestedRedirect}
         onError={setError}
       />
 

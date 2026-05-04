@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getSafeRedirectPath } from "@/lib/auth/redirect";
+import { getPostAuthRedirect } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -16,10 +16,17 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function getRedirectTarget() {
-    return getSafeRedirectPath(
-      new URLSearchParams(window.location.search).get("next"),
-    );
+  function getRequestedRedirect() {
+    return new URLSearchParams(window.location.search).get("next");
+  }
+
+  async function getRedirectAfterLogin() {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .maybeSingle();
+
+    return getPostAuthRedirect(getRequestedRedirect(), profile?.role);
   }
 
   async function handleEmailLogin(e: React.FormEvent) {
@@ -38,7 +45,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push(getRedirectTarget());
+    router.push(await getRedirectAfterLogin());
     router.refresh();
   }
 
@@ -69,6 +76,14 @@ export function LoginForm() {
           placeholder="••••••••"
           autoComplete="current-password"
         />
+        <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-primary hover:underline"
+          >
+            ลืมรหัสผ่าน?
+          </Link>
+        </div>
         <SubmitButton
           loading={loading}
           label="เข้าสู่ระบบ"
@@ -80,7 +95,7 @@ export function LoginForm() {
 
       <GoogleLogin
         label="เข้าสู่ระบบด้วย Google"
-        getRedirectTarget={getRedirectTarget}
+        getRequestedRedirect={getRequestedRedirect}
         onError={setError}
       />
 
