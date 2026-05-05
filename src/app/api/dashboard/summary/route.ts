@@ -9,28 +9,50 @@ export async function GET() {
     return auth.response;
   }
 
-  const [{ data: profile, error: profileError }, { data: stats, error: statsError }] =
-    await Promise.all([
-      auth.supabase
-        .from("profiles")
-        .select("display_name, username, role, preferred_cefr_level")
-        .eq("id", auth.user.id)
-        .maybeSingle(),
-      auth.supabase
-        .from("user_stats")
-        .select(
-          "total_xp, level, current_streak, lessons_completed, quizzes_completed, vocab_mastered",
+  const { data, error } = await auth.supabase
+    .from("user_stats")
+    .select(
+      `
+        total_xp,
+        level,
+        current_streak,
+        lessons_completed,
+        quizzes_completed,
+        vocab_mastered,
+        profiles!inner (
+          display_name,
+          username,
+          role,
+          preferred_cefr_level
         )
-        .eq("user_id", auth.user.id)
-        .maybeSingle(),
-    ]);
+      `,
+    )
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
 
-  if (profileError || statsError) {
+  if (error) {
     return NextResponse.json(
       { error: "Unable to load dashboard summary" },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ profile, stats });
+  const profile = Array.isArray(data?.profiles)
+    ? data.profiles[0]
+    : data?.profiles;
+  const stats = data
+    ? {
+        total_xp: data.total_xp,
+        level: data.level,
+        current_streak: data.current_streak,
+        lessons_completed: data.lessons_completed,
+        quizzes_completed: data.quizzes_completed,
+        vocab_mastered: data.vocab_mastered,
+      }
+    : null;
+
+  return NextResponse.json({
+    profile: profile ?? null,
+    stats,
+  });
 }
