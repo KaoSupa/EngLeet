@@ -14,6 +14,26 @@ function timingHeader(timings: Record<string, number>) {
     .join(", ");
 }
 
+function dashboardTimingHeaders(timings: {
+  auth: number;
+  query?: number;
+  total: number;
+}) {
+  const headers: Record<string, string> = {
+    "Cache-Control": "private, no-store",
+    "Server-Timing": timingHeader(timings),
+    "x-engleet-route-version": ROUTE_VERSION,
+    "x-engleet-timing-auth-ms": String(timings.auth),
+    "x-engleet-timing-total-ms": String(timings.total),
+  };
+
+  if (timings.query !== undefined) {
+    headers["x-engleet-timing-query-ms"] = String(timings.query);
+  }
+
+  return headers;
+}
+
 export async function GET() {
   const totalStart = performance.now();
   const authStart = performance.now();
@@ -21,12 +41,15 @@ export async function GET() {
   const authMs = timingMs(authStart);
 
   if (auth.response) {
-    auth.response.headers.set(
-      "Server-Timing",
-      timingHeader({ auth: authMs, total: timingMs(totalStart) }),
-    );
-    auth.response.headers.set("Cache-Control", "private, no-store");
-    auth.response.headers.set("x-engleet-route-version", ROUTE_VERSION);
+    const headers = dashboardTimingHeaders({
+      auth: authMs,
+      total: timingMs(totalStart),
+    });
+
+    Object.entries(headers).forEach(([key, value]) => {
+      auth.response.headers.set(key, value);
+    });
+
     return auth.response;
   }
 
@@ -58,15 +81,11 @@ export async function GET() {
       { error: "Unable to load dashboard summary" },
       {
         status: 500,
-        headers: {
-          "Cache-Control": "private, no-store",
-          "Server-Timing": timingHeader({
-            auth: authMs,
-            query: queryMs,
-            total: timingMs(totalStart),
-          }),
-          "x-engleet-route-version": ROUTE_VERSION,
-        },
+        headers: dashboardTimingHeaders({
+          auth: authMs,
+          query: queryMs,
+          total: timingMs(totalStart),
+        }),
       },
     );
   }
@@ -91,15 +110,11 @@ export async function GET() {
       stats,
     },
     {
-      headers: {
-        "Cache-Control": "private, no-store",
-        "Server-Timing": timingHeader({
-          auth: authMs,
-          query: queryMs,
-          total: timingMs(totalStart),
-        }),
-        "x-engleet-route-version": ROUTE_VERSION,
-      },
+      headers: dashboardTimingHeaders({
+        auth: authMs,
+        query: queryMs,
+        total: timingMs(totalStart),
+      }),
     },
   );
 }
