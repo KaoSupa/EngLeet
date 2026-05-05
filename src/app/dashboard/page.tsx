@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const { supabase, user } = await requireUser("/dashboard");
@@ -17,6 +18,10 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
+
+  if (profile?.role === "admin") {
+    redirect("/admin");
+  }
 
   return (
     <main className="min-h-screen bg-background px-6 py-10">
