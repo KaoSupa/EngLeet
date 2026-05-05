@@ -3,6 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REQUIREMENTS_TEXT,
+  validatePasswordStrength,
+} from "@/lib/auth/password";
 import { createClient } from "@/lib/supabase/client";
 import { ErrorMessage, Field, SubmitButton, SuccessMessage } from "./UI";
 
@@ -25,8 +31,9 @@ export function ResetPasswordForm() {
     setError("");
     setSuccess("");
 
-    if (password.length < 8) {
-      setError("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+    const passwordError = validatePasswordStrength(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -70,8 +77,11 @@ export function ResetPasswordForm() {
           type="password"
           value={password}
           onChange={setPassword}
-          placeholder="อย่างน้อย 8 ตัวอักษร"
+          placeholder="อย่างน้อย 12 ตัวอักษร"
           autoComplete="new-password"
+          minLength={PASSWORD_MIN_LENGTH}
+          maxLength={PASSWORD_MAX_LENGTH}
+          helpText={PASSWORD_REQUIREMENTS_TEXT}
         />
         <Field
           label="ยืนยันรหัสผ่านใหม่"

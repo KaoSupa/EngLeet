@@ -6,6 +6,9 @@ export function Field({
   onChange,
   placeholder,
   autoComplete,
+  minLength,
+  maxLength,
+  helpText,
 }: {
   label: string;
   name?: string;
@@ -14,6 +17,9 @@ export function Field({
   onChange: (val: string) => void;
   placeholder?: string;
   autoComplete?: string;
+  minLength?: number;
+  maxLength?: number;
+  helpText?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -28,9 +34,12 @@ export function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        minLength={minLength}
+        maxLength={maxLength}
         required
         className="w-full border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
       />
+      {helpText && <p className="text-xs text-muted-foreground">{helpText}</p>}
     </div>
   );
 }
