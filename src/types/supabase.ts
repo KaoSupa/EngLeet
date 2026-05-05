@@ -919,6 +919,42 @@ export type Database = {
           word: string
         }[]
       }
+      server_complete_lesson: {
+        Args: {
+          p_lesson_id: string
+          p_study_time_seconds?: number
+          p_user_id: string
+        }
+        Returns: {
+          lesson_id: string
+          status: Database["public"]["Enums"]["lesson_status"]
+          xp_earned: number
+        }[]
+      }
+      server_review_vocabulary: {
+        Args: { p_quality: number; p_user_id: string; p_vocabulary_id: string }
+        Returns: undefined
+      }
+      server_save_vocabulary: {
+        Args: { p_user_id: string; p_vocabulary_id: string }
+        Returns: undefined
+      }
+      server_submit_lesson_quiz: {
+        Args: {
+          p_answers: Json
+          p_lesson_id: string
+          p_time_taken_seconds?: number
+          p_user_id: string
+        }
+        Returns: {
+          attempt_id: string
+          max_score: number
+          passed: boolean
+          percentage: number
+          score: number
+          xp_earned: number
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       slugify: { Args: { value: string }; Returns: string }
