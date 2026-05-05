@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getApiUser } from "@/lib/auth/api";
+import { DASHBOARD_PROFILE_SELECT } from "@/lib/users/profile";
 
 export async function GET() {
   const auth = await getApiUser();
@@ -20,10 +21,7 @@ export async function GET() {
         quizzes_completed,
         vocab_mastered,
         profiles!inner (
-          display_name,
-          username,
-          role,
-          preferred_cefr_level
+          ${DASHBOARD_PROFILE_SELECT}
         )
       `,
     )

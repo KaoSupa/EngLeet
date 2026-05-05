@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type ProfileSummary = {
-  display_name: string | null;
-  username: string | null;
-  role: "user" | "admin";
-  preferred_cefr_level: string | null;
-};
+import type {
+  DashboardProfileSummary,
+  InitialUserProfile,
+} from "@/lib/users/profile";
 
 type StatsSummary = {
   total_xp: number;
@@ -20,7 +18,7 @@ type StatsSummary = {
 };
 
 type DashboardSummaryResponse = {
-  profile: ProfileSummary | null;
+  profile: DashboardProfileSummary | null;
   stats: StatsSummary | null;
 };
 
@@ -30,9 +28,9 @@ type SummaryState =
   | { status: "error"; message: string };
 
 export default function DashboardSummary({
-  initialEmail,
+  initialProfile,
 }: {
-  initialEmail: string | null;
+  initialProfile: InitialUserProfile;
 }) {
   const router = useRouter();
   const [state, setState] = useState<SummaryState>({ status: "loading" });
@@ -82,23 +80,37 @@ export default function DashboardSummary({
   const profile = state.status === "ready" ? state.data.profile : null;
   const stats = state.status === "ready" ? state.data.stats : null;
   const displayName =
-    profile?.display_name ?? profile?.username ?? initialEmail ?? "Learner";
+    profile?.display_name ??
+    profile?.username ??
+    initialProfile.displayName ??
+    initialProfile.username ??
+    "Learner";
+  const username = profile?.username ?? initialProfile.username;
+  const avatarUrl = profile?.avatar_url ?? initialProfile.avatarUrl;
 
   return (
     <>
       <section className="space-y-2">
         <p className="text-sm text-muted-foreground">Dashboard</p>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold">สวัสดี {displayName}</h1>
-            <p className="text-muted-foreground">
-              ติดตามความคืบหน้า XP และ streak ของคุณได้จากหน้านี้
-            </p>
-            {state.status === "error" && (
-              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {state.message}
+          <div className="flex items-start gap-4">
+            <Avatar name={displayName} avatarUrl={avatarUrl} />
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <h1 className="text-3xl font-semibold">สวัสดี {displayName}</h1>
+                {username && (
+                  <p className="text-sm text-muted-foreground">@{username}</p>
+                )}
+              </div>
+              <p className="text-muted-foreground">
+                ติดตามความคืบหน้า XP และ streak ของคุณได้จากหน้านี้
               </p>
-            )}
+              {state.status === "error" && (
+                <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {state.message}
+                </p>
+              )}
+            </div>
           </div>
           <form action="/auth/logout" method="post">
             <button
@@ -147,6 +159,27 @@ export default function DashboardSummary({
         />
       </section>
     </>
+  );
+}
+
+function Avatar({
+  name,
+  avatarUrl,
+}: {
+  name: string;
+  avatarUrl: string | null;
+}) {
+  const initial = name.trim().charAt(0).toUpperCase() || "L";
+
+  return (
+    <div
+      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border bg-muted bg-cover bg-center text-lg font-semibold text-muted-foreground shadow-sm"
+      style={avatarUrl ? { backgroundImage: `url("${avatarUrl}")` } : undefined}
+      aria-label={name}
+      role="img"
+    >
+      {!avatarUrl && initial}
+    </div>
   );
 }
 
