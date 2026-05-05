@@ -61,6 +61,16 @@ export function RegisterForm() {
       return;
     }
 
+    if (!password) {
+      setError("กรุณากรอกรหัสผ่าน");
+      return;
+    }
+
+    if (!confirmPassword) {
+      setError("กรุณายืนยันรหัสผ่าน");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("รหัสผ่านไม่ตรงกัน");
       return;
@@ -117,7 +127,7 @@ export function RegisterForm() {
         </p>
       </div>
 
-      <form onSubmit={handleRegister} className="space-y-4">
+      <form onSubmit={handleRegister} className="space-y-4" noValidate>
         {error && <ErrorMessage message={error} />}
         {success && <SuccessMessage message={success} />}
         <Field
@@ -135,7 +145,7 @@ export function RegisterForm() {
           type="password"
           value={password}
           onChange={setPassword}
-          placeholder="อย่างน้อย 12 ตัวอักษร"
+          placeholder="อย่างน้อย 10 ตัวอักษร"
           autoComplete="new-password"
           minLength={PASSWORD_MIN_LENGTH}
           maxLength={PASSWORD_MAX_LENGTH}

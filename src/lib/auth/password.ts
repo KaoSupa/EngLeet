@@ -1,4 +1,4 @@
-export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MIN_LENGTH = 10;
 export const PASSWORD_MAX_LENGTH = 72;
 
 const COMMON_WEAK_PASSWORDS = new Set([
@@ -15,7 +15,7 @@ const COMMON_WEAK_PASSWORDS = new Set([
 ]);
 
 export const PASSWORD_REQUIREMENTS_TEXT =
-  "ใช้รหัสผ่าน 12-72 ตัวอักษร และมีตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ ตัวเลข และสัญลักษณ์";
+  "ใช้รหัสผ่านอย่างน้อย 10 ตัวอักษร";
 
 export function validatePasswordStrength(
   password: string,
@@ -31,22 +31,6 @@ export function validatePasswordStrength(
 
   if (/\s/.test(password)) {
     return "รหัสผ่านต้องไม่มีช่องว่าง";
-  }
-
-  if (!/[a-z]/.test(password)) {
-    return "รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว";
-  }
-
-  if (!/[A-Z]/.test(password)) {
-    return "รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว";
-  }
-
-  if (!/\d/.test(password)) {
-    return "รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว";
-  }
-
-  if (!/[^A-Za-z0-9]/.test(password)) {
-    return "รหัสผ่านต้องมีสัญลักษณ์อย่างน้อย 1 ตัว";
   }
 
   const normalizedPassword = password.toLowerCase();

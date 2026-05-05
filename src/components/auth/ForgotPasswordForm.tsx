@@ -25,13 +25,26 @@ export function ForgotPasswordForm() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setError("กรุณากรอกอีเมล");
+      return;
+    }
+
+    if (!trimmedEmail.includes("@")) {
+      setError("อีเมลไม่ถูกต้อง");
+      return;
+    }
+
     setLoading(true);
 
     const redirectTo = new URL(
       "/auth/reset-password/confirm",
       window.location.origin,
     );
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
       redirectTo: redirectTo.toString(),
     });
 
@@ -54,7 +67,7 @@ export function ForgotPasswordForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {(error || linkError) && <ErrorMessage message={error || linkError || ""} />}
         {success && <SuccessMessage message={success} />}
         <Field

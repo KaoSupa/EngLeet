@@ -37,11 +37,29 @@ export function LoginForm() {
 
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setError("กรุณากรอกอีเมล");
+      return;
+    }
+
+    if (!trimmedEmail.includes("@")) {
+      setError("อีเมลไม่ถูกต้อง");
+      return;
+    }
+
+    if (!password) {
+      setError("กรุณากรอกรหัสผ่าน");
+      return;
+    }
+
+    setLoading(true);
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email: trimmedEmail,
       password,
     });
 
@@ -61,7 +79,7 @@ export function LoginForm() {
         <p className="text-sm text-muted-foreground">ยินดีต้อนรับกลับมา</p>
       </div>
 
-      <form onSubmit={handleEmailLogin} className="space-y-4">
+      <form onSubmit={handleEmailLogin} className="space-y-4" noValidate>
         {searchParams.get("password_reset") === "success" && (
           <SuccessMessage message="ตั้งรหัสผ่านใหม่สำเร็จแล้ว โปรดเข้าสู่ระบบอีกครั้ง" />
         )}

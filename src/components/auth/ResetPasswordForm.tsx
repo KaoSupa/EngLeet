@@ -31,6 +31,16 @@ export function ResetPasswordForm() {
     setError("");
     setSuccess("");
 
+    if (!password) {
+      setError("กรุณากรอกรหัสผ่านใหม่");
+      return;
+    }
+
+    if (!confirmPassword) {
+      setError("กรุณายืนยันรหัสผ่านใหม่");
+      return;
+    }
+
     const passwordError = validatePasswordStrength(password);
     if (passwordError) {
       setError(passwordError);
@@ -68,7 +78,7 @@ export function ResetPasswordForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {(error || linkError) && <ErrorMessage message={error || linkError} />}
         {success && <SuccessMessage message={success} />}
         <Field
@@ -77,7 +87,7 @@ export function ResetPasswordForm() {
           type="password"
           value={password}
           onChange={setPassword}
-          placeholder="อย่างน้อย 12 ตัวอักษร"
+          placeholder="อย่างน้อย 10 ตัวอักษร"
           autoComplete="new-password"
           minLength={PASSWORD_MIN_LENGTH}
           maxLength={PASSWORD_MAX_LENGTH}
