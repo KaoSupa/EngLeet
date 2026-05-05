@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getRoleFromAppMetadata } from "@/lib/auth/claims";
 import { getPostAuthRedirect } from "@/lib/auth/redirect";
 import {
   PASSWORD_MAX_LENGTH,
@@ -35,18 +36,11 @@ export function RegisterForm() {
     return searchParams.get("next");
   }
 
-  async function getRedirectAfterRegister(userId: string | undefined) {
-    if (!userId) {
-      return getPostAuthRedirect(getRequestedRedirect(), null);
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle();
-
-    return getPostAuthRedirect(getRequestedRedirect(), profile?.role);
+  function getRedirectAfterRegister(appMetadata: unknown) {
+    return getPostAuthRedirect(
+      getRequestedRedirect(),
+      getRoleFromAppMetadata(appMetadata) ?? "user",
+    );
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -108,7 +102,7 @@ export function RegisterForm() {
     }
 
     if (data.session) {
-      router.push(await getRedirectAfterRegister(data.user?.id));
+      router.push(getRedirectAfterRegister(data.user?.app_metadata));
       return;
     }
 

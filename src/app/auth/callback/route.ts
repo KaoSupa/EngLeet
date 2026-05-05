@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getRoleFromAppMetadata } from '@/lib/auth/claims'
 import { getPostAuthRedirect } from '@/lib/auth/redirect'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -10,12 +11,10 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error && data.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .maybeSingle()
-      const next = getPostAuthRedirect(searchParams.get('next'), profile?.role)
+      const next = getPostAuthRedirect(
+        searchParams.get('next'),
+        getRoleFromAppMetadata(data.user.app_metadata),
+      )
 
       return NextResponse.redirect(new URL(next, origin))
     }

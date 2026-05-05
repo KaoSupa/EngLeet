@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { getRoleFromClaims, getStringClaim } from "@/lib/auth/claims";
 import { createClient } from "@/lib/supabase/server";
-
-function getStringClaim(
-  claims: Record<string, unknown> | undefined,
-  key: string,
-) {
-  const value = claims?.[key];
-
-  return typeof value === "string" ? value : null;
-}
 
 export async function getApiUser() {
   const supabase = await createClient();
@@ -29,9 +21,11 @@ export async function getApiUser() {
 
   return {
     response: null,
+    supabase,
     user: {
       id: userId,
       email: getStringClaim(claims, "email"),
+      role: getRoleFromClaims(claims),
     },
   };
 }

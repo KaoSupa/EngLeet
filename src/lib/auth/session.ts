@@ -1,14 +1,6 @@
 import { redirect } from "next/navigation";
+import { getRoleFromClaims, getStringClaim } from "@/lib/auth/claims";
 import { createClient } from "@/lib/supabase/server";
-
-function getStringClaim(
-  claims: Record<string, unknown> | undefined,
-  key: string,
-) {
-  const value = claims?.[key];
-
-  return typeof value === "string" ? value : null;
-}
 
 export async function requireUser(next = "/dashboard") {
   const supabase = await createClient();
@@ -23,6 +15,7 @@ export async function requireUser(next = "/dashboard") {
   const user = {
     id: userId,
     email: getStringClaim(claims, "email"),
+    role: getRoleFromClaims(claims),
   };
 
   return { supabase, user };
@@ -30,11 +23,19 @@ export async function requireUser(next = "/dashboard") {
 
 export async function requireAdmin(next = "/admin") {
   const { supabase, user } = await requireUser(next);
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
+  let profile: { role: "user" | "admin" } | null = user.role
+    ? { role: user.role }
+    : null;
+
+  if (!profile) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    profile = data;
+  }
 
   if (profile?.role !== "admin") {
     redirect("/dashboard");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getRoleFromAppMetadata } from "@/lib/auth/claims";
 import { getPostAuthRedirect } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -21,18 +22,11 @@ export function LoginForm() {
     return searchParams.get("next");
   }
 
-  async function getRedirectAfterLogin(userId: string | undefined) {
-    if (!userId) {
-      return getPostAuthRedirect(getRequestedRedirect(), null);
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle();
-
-    return getPostAuthRedirect(getRequestedRedirect(), profile?.role);
+  function getRedirectAfterLogin(appMetadata: unknown) {
+    return getPostAuthRedirect(
+      getRequestedRedirect(),
+      getRoleFromAppMetadata(appMetadata),
+    );
   }
 
   async function handleEmailLogin(e: React.FormEvent) {
@@ -69,7 +63,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push(await getRedirectAfterLogin(data.user?.id));
+    router.push(getRedirectAfterLogin(data.user?.app_metadata));
   }
 
   return (

@@ -3,6 +3,7 @@ import {
   getPostAuthRedirect,
   getSafeRedirectPath,
 } from "@/lib/auth/redirect";
+import { getRoleFromClaims, getStringClaim } from "@/lib/auth/claims";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/supabase";
 
@@ -21,15 +22,6 @@ function hasSupabaseAuthCookie(request: NextRequest) {
     .some(
       ({ name }) => name.startsWith("sb-") && name.includes("-auth-token"),
     );
-}
-
-function getStringClaim(
-  claims: Record<string, unknown> | undefined,
-  key: string,
-) {
-  const value = claims?.[key];
-
-  return typeof value === "string" ? value : null;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -76,15 +68,21 @@ export async function updateSession(request: NextRequest) {
   const userId = error ? null : getStringClaim(claims, "sub");
 
   if (userId && isAuthRoute) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle();
+    let role = getRoleFromClaims(claims);
+
+    if (!role) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .maybeSingle();
+
+      role = profile?.role ?? null;
+    }
 
     const next = getPostAuthRedirect(
       request.nextUrl.searchParams.get("next"),
-      profile?.role,
+      role,
     );
 
     return NextResponse.redirect(new URL(next, request.url));
