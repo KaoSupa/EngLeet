@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "vocab:import": "node scripts/import-vocabulary.mjs",
     "types:gen": "pnpm dlx supabase gen types typescript --project-id upjizwfijyokohubfsqc --schema public > src/types/supabase.ts"
   },
   "dependencies": {

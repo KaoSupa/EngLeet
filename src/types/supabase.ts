@@ -801,13 +801,21 @@ export type Database = {
           frequency_rank: number | null
           id: string
           image_url: string | null
+          is_oxford: boolean
+          is_toeic: boolean
           normalized_word: string
           part_of_speech: Database["public"]["Enums"]["part_of_speech"] | null
           phonetic: string | null
+          license: string | null
+          review_status: Database["public"]["Enums"]["vocabulary_review_status"]
           slug: string
+          source: Database["public"]["Enums"]["vocabulary_source"]
+          source_url: string | null
+          status: Database["public"]["Enums"]["content_status"]
           tags: string[]
           tts_audio_url: string | null
           updated_at: string
+          reviewed_at: string | null
           word: string
         }
         Insert: {
@@ -821,13 +829,21 @@ export type Database = {
           frequency_rank?: number | null
           id?: string
           image_url?: string | null
+          is_oxford?: boolean
+          is_toeic?: boolean
           normalized_word: string
           part_of_speech?: Database["public"]["Enums"]["part_of_speech"] | null
           phonetic?: string | null
+          license?: string | null
+          review_status?: Database["public"]["Enums"]["vocabulary_review_status"]
           slug: string
+          source?: Database["public"]["Enums"]["vocabulary_source"]
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["content_status"]
           tags?: string[]
           tts_audio_url?: string | null
           updated_at?: string
+          reviewed_at?: string | null
           word: string
         }
         Update: {
@@ -841,13 +857,21 @@ export type Database = {
           frequency_rank?: number | null
           id?: string
           image_url?: string | null
+          is_oxford?: boolean
+          is_toeic?: boolean
           normalized_word?: string
           part_of_speech?: Database["public"]["Enums"]["part_of_speech"] | null
           phonetic?: string | null
+          license?: string | null
+          review_status?: Database["public"]["Enums"]["vocabulary_review_status"]
           slug?: string
+          source?: Database["public"]["Enums"]["vocabulary_source"]
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["content_status"]
           tags?: string[]
           tts_audio_url?: string | null
           updated_at?: string
+          reviewed_at?: string | null
           word?: string
         }
         Relationships: []
@@ -1009,6 +1033,8 @@ export type Database = {
       theme: "light" | "dark" | "system"
       user_role: "user" | "admin"
       vocab_status: "new" | "learning" | "reviewing" | "mastered"
+      vocabulary_review_status: "ai_draft" | "human_reviewed" | "approved"
+      vocabulary_source: "manual" | "ai" | "wiktionary" | "imported"
       xp_source:
         | "lesson_complete"
         | "quiz_pass"
@@ -1178,6 +1204,8 @@ export const Constants = {
       theme: ["light", "dark", "system"],
       user_role: ["user", "admin"],
       vocab_status: ["new", "learning", "reviewing", "mastered"],
+      vocabulary_review_status: ["ai_draft", "human_reviewed", "approved"],
+      vocabulary_source: ["manual", "ai", "wiktionary", "imported"],
       xp_source: [
         "lesson_complete",
         "quiz_pass",
