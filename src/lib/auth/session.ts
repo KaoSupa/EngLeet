@@ -23,19 +23,11 @@ export async function requireUser(next = "/dashboard") {
 
 export async function requireAdmin(next = "/admin") {
   const { supabase, user } = await requireUser(next);
-  let profile: { role: "user" | "admin" } | null = user.role
-    ? { role: user.role }
-    : null;
-
-  if (!profile) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    profile = data;
-  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
 
   if (profile?.role !== "admin") {
     redirect("/dashboard");

@@ -21,6 +21,36 @@ import {
 } from "./UI";
 import GoogleLogin from "./GoogleLogin";
 
+function getRegisterErrorMessage(error: { message?: string; code?: string }) {
+  const detail = `${error.code ?? ""} ${error.message ?? ""}`.toLowerCase();
+
+  if (
+    detail.includes("already") ||
+    detail.includes("registered") ||
+    detail.includes("user_already_exists")
+  ) {
+    return "อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบแทน";
+  }
+
+  if (
+    detail.includes("password") ||
+    detail.includes("weak_password") ||
+    detail.includes("password should")
+  ) {
+    return "รหัสผ่านไม่ผ่านเงื่อนไขของระบบ กรุณาใช้รหัสผ่านอย่างน้อย 10 ตัวอักษร";
+  }
+
+  if (detail.includes("email")) {
+    return "อีเมลไม่ถูกต้อง หรือไม่สามารถใช้อีเมลนี้สมัครได้";
+  }
+
+  if (detail.includes("signup") && detail.includes("disabled")) {
+    return "ระบบสมัครสมาชิกด้วยอีเมลยังไม่เปิดใช้งาน";
+  }
+
+  return "ไม่สามารถสมัครสมาชิกได้ โปรดลองใหม่อีกครั้ง หรือเข้าสู่ระบบหากมีบัญชีอยู่แล้ว";
+}
+
 export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -94,9 +124,7 @@ export function RegisterForm() {
     });
 
     if (error) {
-      setError(
-        "ไม่สามารถสมัครสมาชิกได้ โปรดตรวจสอบข้อมูลหรือเข้าสู่ระบบหากมีบัญชีอยู่แล้ว",
-      );
+      setError(getRegisterErrorMessage(error));
       setLoading(false);
       return;
     }
