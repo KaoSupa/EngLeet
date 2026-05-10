@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cache } from "react";
 
 import type { Database } from "@/types/supabase";
 
@@ -47,7 +48,20 @@ function toUserIdentity(profile: Pick<
   };
 }
 
-export async function getUserIdentity(
+function toDashboardProfileSummary(
+  profile: Pick<
+    ProfileRow,
+    | "display_name"
+    | "username"
+    | "avatar_url"
+    | "role"
+    | "preferred_cefr_level"
+  > | null,
+): DashboardProfileSummary | null {
+  return profile;
+}
+
+export const getUserIdentity = cache(async function getUserIdentity(
   supabase: SupabaseClient<Database>,
   userId: string,
 ) {
@@ -61,4 +75,20 @@ export async function getUserIdentity(
     identity: error ? null : toUserIdentity(data),
     error,
   };
-}
+});
+
+export const getDashboardProfile = cache(async function getDashboardProfile(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(DASHBOARD_PROFILE_SELECT)
+    .eq("id", userId)
+    .maybeSingle();
+
+  return {
+    profile: error ? null : toDashboardProfileSummary(data),
+    error,
+  };
+});

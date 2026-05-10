@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { GoogleIcon } from "./UI";
 
@@ -18,7 +18,33 @@ export default function GoogleLogin({
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    function resetLoading() {
+      setLoading(false);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        resetLoading();
+      }
+    }
+
+    window.addEventListener("pageshow", resetLoading);
+    window.addEventListener("focus", resetLoading);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pageshow", resetLoading);
+      window.removeEventListener("focus", resetLoading);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   async function handleGoogleLogin() {
+    if (loading) {
+      return;
+    }
+
     setLoading(true);
     onError("");
 
@@ -29,17 +55,27 @@ export default function GoogleLogin({
       callbackUrl.searchParams.set("next", requestedRedirect);
     }
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: callbackUrl.toString(),
+        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
       onError("ไม่สามารถเข้าสู่ระบบด้วย Google ได้ โปรดลองอีกครั้ง");
       setLoading(false);
+      return;
     }
+
+    if (data.url) {
+      window.location.assign(data.url);
+      return;
+    }
+
+    onError("ไม่สามารถเปิดหน้าเข้าสู่ระบบ Google ได้ โปรดลองอีกครั้ง");
+    setLoading(false);
   }
 
   return (

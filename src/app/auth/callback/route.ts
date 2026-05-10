@@ -6,6 +6,16 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const authError = searchParams.get('error')
+
+  if (authError) {
+    const loginUrl = new URL('/login', origin)
+    loginUrl.searchParams.set(
+      'error',
+      authError === 'access_denied' ? 'oauth_cancelled' : authError,
+    )
+    return NextResponse.redirect(loginUrl)
+  }
 
   if (code) {
     const supabase = await createClient()

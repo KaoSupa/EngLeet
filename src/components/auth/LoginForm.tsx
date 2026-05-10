@@ -9,13 +9,30 @@ import Link from "next/link";
 import { SubmitButton, Divider, Field, ErrorMessage, SuccessMessage } from "./UI";
 import GoogleLogin from "./GoogleLogin";
 
+function getLoginErrorMessage(errorCode: string | null) {
+  if (!errorCode) {
+    return "";
+  }
+
+  if (errorCode === "oauth_cancelled" || errorCode === "access_denied") {
+    return "การเข้าสู่ระบบด้วย Google ถูกยกเลิก โปรดลองอีกครั้ง";
+  }
+
+  if (errorCode === "auth_failed") {
+    return "เข้าสู่ระบบไม่สำเร็จ โปรดลองอีกครั้ง";
+  }
+
+  return "เข้าสู่ระบบไม่สำเร็จ โปรดลองอีกครั้ง";
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const queryError = getLoginErrorMessage(searchParams.get("error"));
+  const [error, setError] = useState(queryError);
   const [loading, setLoading] = useState(false);
 
   function getRequestedRedirect() {

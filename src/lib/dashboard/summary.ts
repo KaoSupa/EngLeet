@@ -1,9 +1,6 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-import {
-  DASHBOARD_PROFILE_SELECT,
-  type DashboardProfileSummary,
-} from "@/lib/users/profile";
+import type { DashboardProfileSummary } from "@/lib/users/profile";
 import type { Database } from "@/types/supabase";
 
 type UserStatsRow = Database["public"]["Tables"]["user_stats"]["Row"];
@@ -16,49 +13,42 @@ export type DashboardStatsSummary = Pick<
   | "lessons_completed"
   | "quizzes_completed"
   | "vocab_mastered"
+  | "total_study_time_seconds"
 >;
 
 export type DashboardSummaryData = {
   profile: DashboardProfileSummary | null;
-  stats: DashboardStatsSummary | null;
+  stats: DashboardStatsSummary;
 };
 
-type DashboardSummaryRow = DashboardStatsSummary & {
-  profiles: DashboardProfileSummary | DashboardProfileSummary[] | null;
+export const EMPTY_DASHBOARD_STATS: DashboardStatsSummary = {
+  total_xp: 0,
+  level: 1,
+  current_streak: 0,
+  lessons_completed: 0,
+  quizzes_completed: 0,
+  vocab_mastered: 0,
+  total_study_time_seconds: 0,
 };
 
-const EMPTY_DASHBOARD_SUMMARY: DashboardSummaryData = {
+export const EMPTY_DASHBOARD_SUMMARY: DashboardSummaryData = {
   profile: null,
-  stats: null,
+  stats: EMPTY_DASHBOARD_STATS,
 };
 
-function normalizeProfile(
-  profile: DashboardSummaryRow["profiles"],
-): DashboardProfileSummary | null {
-  if (Array.isArray(profile)) {
-    return profile[0] ?? null;
-  }
-
-  return profile;
-}
-
-function toDashboardSummary(
-  data: DashboardSummaryRow | null,
-): DashboardSummaryData {
+function toDashboardStats(data: DashboardStatsSummary | null) {
   if (!data) {
-    return EMPTY_DASHBOARD_SUMMARY;
+    return EMPTY_DASHBOARD_STATS;
   }
 
   return {
-    profile: normalizeProfile(data.profiles),
-    stats: {
-      total_xp: data.total_xp,
-      level: data.level,
-      current_streak: data.current_streak,
-      lessons_completed: data.lessons_completed,
-      quizzes_completed: data.quizzes_completed,
-      vocab_mastered: data.vocab_mastered,
-    },
+    total_xp: data.total_xp ?? 0,
+    level: data.level ?? 1,
+    current_streak: data.current_streak ?? 0,
+    lessons_completed: data.lessons_completed ?? 0,
+    quizzes_completed: data.quizzes_completed ?? 0,
+    vocab_mastered: data.vocab_mastered ?? 0,
+    total_study_time_seconds: data.total_study_time_seconds ?? 0,
   };
 }
 
@@ -79,18 +69,24 @@ export async function getDashboardSummary(
         lessons_completed,
         quizzes_completed,
         vocab_mastered,
-        profiles!inner (
-          ${DASHBOARD_PROFILE_SELECT}
-        )
+        total_study_time_seconds
       `,
     )
     .eq("user_id", userId)
     .maybeSingle();
 
+  if (error) {
+    return {
+      summary: EMPTY_DASHBOARD_SUMMARY,
+      error,
+    };
+  }
+
   return {
-    summary: error
-      ? EMPTY_DASHBOARD_SUMMARY
-      : toDashboardSummary(data as DashboardSummaryRow | null),
-    error,
+    summary: {
+      profile: null,
+      stats: toDashboardStats(data),
+    },
+    error: null,
   };
 }
