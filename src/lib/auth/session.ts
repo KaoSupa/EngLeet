@@ -4,7 +4,7 @@ import { getRoleFromClaims, getStringClaim } from "@/lib/auth/claims";
 import { createClient } from "@/lib/supabase/server";
 import { PROFILE_IDENTITY_SELECT } from "@/lib/users/profile";
 
-const getAuthenticatedSession = cache(async function getAuthenticatedSession() {
+export const getAuthenticatedSession = cache(async function getAuthenticatedSession() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   const claims = data?.claims as Record<string, unknown> | undefined;

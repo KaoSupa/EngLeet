@@ -159,6 +159,7 @@ function toVocabularyRow(entry, defaults) {
 function loadRows() {
   const rows = [];
   const seenSlugs = new Set();
+  const seenWordParts = new Set();
 
   for (const file of readVocabularyFiles()) {
     const payload = JSON.parse(readFileSync(file, "utf8"));
@@ -176,7 +177,15 @@ function loadRows() {
         throw new Error(`Duplicate vocabulary slug in seed files: ${row.slug}`);
       }
 
+      const wordPartKey = `${row.normalized_word}::${row.part_of_speech ?? ""}`;
+      if (seenWordParts.has(wordPartKey)) {
+        throw new Error(
+          `Duplicate vocabulary word/part in seed files: ${row.normalized_word} (${row.part_of_speech ?? "none"})`,
+        );
+      }
+
       seenSlugs.add(row.slug);
+      seenWordParts.add(wordPartKey);
       rows.push(row);
     }
   }

@@ -1,9 +1,10 @@
 {
   "defaults": {
-    "status": "draft",
-    "review_status": "ai_draft",
+    "status": "published",
+    "review_status": "approved",
     "source": "ai",
     "license": "Original Engleet content",
+    "reviewed_at": "2026-05-10T00:00:00.000Z",
     "is_toeic": true,
     "is_oxford": false,
     "tags": ["toeic", "business"]

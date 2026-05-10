@@ -4,22 +4,24 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ChevronDown,
+  BookOpen,
+  Shield,
   LayoutDashboard,
   LogOut,
-  Settings,
-  User,
 } from "lucide-react";
 
 type UserMenuProps = {
   displayName: string;
   email: string | null;
   avatarUrl: string | null;
+  role: "user" | "admin";
 };
 
 export default function UserMenu({
   displayName,
   email,
   avatarUrl,
+  role,
 }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -92,12 +94,14 @@ export default function UserMenu({
             <MenuLink href="/dashboard" icon={LayoutDashboard}>
               Dashboard
             </MenuLink>
-            <MenuLink href="/profile" icon={User}>
-              Profile
+            <MenuLink href="/learn/vocabulary" icon={BookOpen}>
+              Vocabulary
             </MenuLink>
-            <MenuLink href="/settings" icon={Settings}>
-              Settings
-            </MenuLink>
+            {role === "admin" && (
+              <MenuLink href="/admin" icon={Shield}>
+                Admin
+              </MenuLink>
+            )}
           </nav>
 
           <form action="/auth/logout" method="post" className="border-t p-1">
