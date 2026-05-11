@@ -6,6 +6,7 @@ import {
   jsonBadRequest,
   readJsonObject,
 } from "@/lib/api/request";
+import { assertRateLimit, getRateLimitIdentity } from "@/lib/api/rate-limit";
 import { getApiUser } from "@/lib/auth/api";
 import {
   learningRpcErrorResponse,
@@ -23,6 +24,14 @@ export async function POST(
   }
 
   try {
+    assertRateLimit({
+      key: getRateLimitIdentity({
+        prefix: "quiz-submit",
+        userId: user.id,
+      }),
+      limit: 10,
+      windowMs: 60_000,
+    });
     const body = await readJsonObject(request);
     const answers = body.answers;
     const timeTakenSeconds = getOptionalInteger(body, "timeTakenSeconds") ?? 0;

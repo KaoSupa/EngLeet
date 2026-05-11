@@ -185,6 +185,7 @@ async function getAvailableVocabularyTags(supabase: SupabaseClient<Database>) {
     .from("vocabulary")
     .select("tags")
     .eq("status", "published")
+    .eq("review_status", "approved")
     .limit(500);
 
   if (error) {
@@ -238,6 +239,7 @@ export async function getVocabularyPageData({
     .from("vocabulary")
     .select(VOCABULARY_SELECT, { count: "exact" })
     .eq("status", "published")
+    .eq("review_status", "approved")
     .order("frequency_rank", { ascending: true, nullsFirst: false })
     .order("word", { ascending: true })
     .range(safeOffset, safeOffset + VOCABULARY_PAGE_SIZE - 1);

@@ -5,6 +5,7 @@ import {
   getRequiredInteger,
   readJsonObject,
 } from "@/lib/api/request";
+import { assertRateLimit, getRateLimitIdentity } from "@/lib/api/rate-limit";
 import { getApiUser } from "@/lib/auth/api";
 import {
   learningRpcErrorResponse,
@@ -21,6 +22,14 @@ export async function POST(
   }
 
   try {
+    assertRateLimit({
+      key: getRateLimitIdentity({
+        prefix: "vocabulary-review",
+        userId: user.id,
+      }),
+      limit: 90,
+      windowMs: 60_000,
+    });
     const body = await readJsonObject(request);
     const quality = getRequiredInteger(body, "quality");
     const { vocabularyId } = await params;

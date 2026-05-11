@@ -1,59 +1,42 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { BookOpen, Search, Tags } from "lucide-react";
 
 export default function LearnPage() {
   return (
-    <main className="min-h-screen bg-background px-6 py-10">
-      <div className="mx-auto max-w-5xl space-y-8">
+    <main className="min-h-screen bg-background px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-6xl space-y-8">
         <section className="space-y-3">
-          <p className="text-sm text-muted-foreground">Learn</p>
-          <h1 className="text-3xl font-semibold">เริ่มเรียนภาษาอังกฤษ</h1>
+          <p className="text-sm font-medium text-primary">Learn</p>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            เริ่มเรียนภาษาอังกฤษกับ Engleet
+          </h1>
           <p className="max-w-2xl text-muted-foreground">
-            สำรวจบทเรียน คำศัพท์ และแบบฝึกหัดได้ฟรี เมื่ออยากบันทึกคำศัพท์
-            ทำ quiz หรือเก็บ XP ระบบจะให้เข้าสู่ระบบก่อน
+            อ่านบทเรียน ฝึกคำศัพท์ และทำ quiz เพื่อสะสม XP
+            เนื้อหาบางส่วนเปิดอ่านได้ทันที ส่วนคะแนนและ progress จะบันทึกเมื่อเข้าสู่ระบบ
           </p>
         </section>
 
         <section className="grid gap-4 md:grid-cols-3">
           <LearningCard
-            title="Courses"
-            description="เรียนเป็นเส้นทางจากง่ายไปยากตามระดับ CEFR"
-            href="/learn/courses"
+            title="Lessons"
+            description="บทเรียนแบบสั้นพร้อม quiz ที่ผู้ดูแลเพิ่มและเผยแพร่ได้"
+            href="/learn/lessons"
+            icon={<BookOpen className="size-5" />}
           />
           <LearningCard
             title="Vocabulary"
-            description="เปิดคลังคำศัพท์พร้อมคำแปล ตัวอย่าง และเสียงอ่าน"
+            description="คลังคำศัพท์พร้อมคำแปล ตัวอย่างประโยค และระบบบันทึกคำ"
             href="/learn/vocabulary"
+            icon={<Tags className="size-5" />}
           />
           <LearningCard
             title="Dictionary"
-            description="ค้นหาคำศัพท์และดูรายละเอียดก่อนบันทึกเข้าคลังของคุณ"
+            description="ค้นคำศัพท์และดูรายละเอียดเพื่อใช้กับข่าวหรือบทเรียน"
             href="/dictionary"
+            icon={<Search className="size-5" />}
           />
         </section>
-
-        <section className="rounded-lg border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">ทำไมหน้านี้เปิด public?</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            เนื้อหาเรียนรู้ควรเปิดให้ค้นหาและแชร์ได้เพื่อช่วย SEO และลด friction
-            สำหรับผู้เรียนใหม่ ส่วนข้อมูลส่วนตัวอย่าง progress, streak, saved
-            vocabulary และ quiz score จะยังต้องเข้าสู่ระบบเสมอ
-          </p>
-        </section>
-
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/dashboard"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            ไป Dashboard
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
-            สมัครเพื่อบันทึกความคืบหน้า
-          </Link>
-        </div>
       </div>
     </main>
   );
@@ -63,15 +46,23 @@ function LearningCard({
   title,
   description,
   href,
+  icon,
 }: {
   title: string;
   description: string;
   href: string;
+  icon: ReactNode;
 }) {
   return (
-    <Link href={href} className="rounded-lg border bg-card p-5 shadow-sm hover:bg-muted/40">
-      <h2 className="font-semibold">{title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+    <Link
+      href={href}
+      className="rounded-lg border bg-card p-5 shadow-sm transition-colors hover:bg-muted/40"
+    >
+      <div className="flex items-center gap-3">
+        <div className="rounded-lg bg-muted p-2">{icon}</div>
+        <h2 className="font-semibold">{title}</h2>
+      </div>
+      <p className="mt-3 text-sm text-muted-foreground">{description}</p>
     </Link>
   );
 }

@@ -29,3 +29,27 @@ export async function getApiUser() {
     },
   };
 }
+
+export async function getApiAdmin() {
+  const result = await getApiUser();
+
+  if (result.response || !result.user) {
+    return result;
+  }
+
+  const { data: profile } = await result.supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", result.user.id)
+    .maybeSingle();
+
+  if (profile?.role !== "admin") {
+    return {
+      response: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+      supabase: result.supabase,
+      user: null,
+    };
+  }
+
+  return result;
+}

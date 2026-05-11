@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { apiRequestErrorResponse } from "@/lib/api/request";
+import { assertRateLimit, getRateLimitIdentity } from "@/lib/api/rate-limit";
 import { getApiUser } from "@/lib/auth/api";
 import {
   learningRpcErrorResponse,
@@ -16,6 +18,14 @@ export async function POST(
   }
 
   try {
+    assertRateLimit({
+      key: getRateLimitIdentity({
+        prefix: "vocabulary-save",
+        userId: user.id,
+      }),
+      limit: 60,
+      windowMs: 60_000,
+    });
     const { vocabularyId } = await params;
     const result = await saveVocabularyForUser({
       userId: user.id,
@@ -24,6 +34,11 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
+    const requestErrorResponse = apiRequestErrorResponse(error);
+    if (requestErrorResponse) {
+      return requestErrorResponse;
+    }
+
     return learningRpcErrorResponse(error);
   }
 }

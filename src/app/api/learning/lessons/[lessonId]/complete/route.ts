@@ -5,6 +5,7 @@ import {
   getOptionalInteger,
   readJsonObject,
 } from "@/lib/api/request";
+import { assertRateLimit, getRateLimitIdentity } from "@/lib/api/rate-limit";
 import { getApiUser } from "@/lib/auth/api";
 import {
   completeLessonForUser,
@@ -21,6 +22,14 @@ export async function POST(
   }
 
   try {
+    assertRateLimit({
+      key: getRateLimitIdentity({
+        prefix: "lesson-complete",
+        userId: user.id,
+      }),
+      limit: 20,
+      windowMs: 60_000,
+    });
     const body = await readJsonObject(request);
     const studyTimeSeconds = getOptionalInteger(body, "studyTimeSeconds") ?? 0;
     const { lessonId } = await params;

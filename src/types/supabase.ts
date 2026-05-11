@@ -955,6 +955,19 @@ export type Database = {
           xp_earned: number
         }[]
       }
+      server_admin_delete_lesson_bundle: {
+        Args: { p_admin_user_id: string; p_lesson_id: string }
+        Returns: undefined
+      }
+      server_admin_upsert_lesson_bundle: {
+        Args: {
+          p_admin_user_id: string
+          p_content_blocks?: Json
+          p_lesson: Json
+          p_questions?: Json
+        }
+        Returns: string
+      }
       server_review_vocabulary: {
         Args: { p_quality: number; p_user_id: string; p_vocabulary_id: string }
         Returns: undefined

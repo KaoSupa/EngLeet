@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { RateLimitError } from "@/lib/api/rate-limit";
+
 export class ApiRequestError extends Error {
   constructor(message: string) {
     super(message);
@@ -58,6 +60,18 @@ export function jsonBadRequest(message: string) {
 }
 
 export function apiRequestErrorResponse(error: unknown) {
+  if (error instanceof RateLimitError) {
+    return NextResponse.json(
+      { error: error.message },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(error.retryAfterSeconds),
+        },
+      },
+    );
+  }
+
   if (error instanceof ApiRequestError) {
     return jsonBadRequest(error.message);
   }

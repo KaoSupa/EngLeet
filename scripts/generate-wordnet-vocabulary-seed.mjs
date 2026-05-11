@@ -1,14 +1,23 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import process from "node:process";
-import wordnetDb from "wordnet-db";
+import { x as extractTar } from "tar";
 
 const DATA_DIR = path.join(process.cwd(), "data", "vocabulary");
 const OUTPUT_FILE = path.join(DATA_DIR, "wordnet-bulk-001.json");
+const WORDNET_CACHE_DIR = path.join(process.cwd(), ".cache", "wordnet-3.0");
 const GENERATED_COUNT_TARGET = 9000;
 const CORE_STYLE_TARGET = 3000;
 const TOEIC_FOCUSED_TARGET = 3000;
 const DAILY_LIFE_TARGET = 3000;
+const require = createRequire(import.meta.url);
 
 const POS_FILES = {
   noun: { index: "index.noun", data: "data.noun", wordnetPos: "n" },
@@ -146,6 +155,12 @@ const BLOCKED_GLOSS_PARTS = [
   "offensive term",
 ];
 
+const THAI_TRANSLATION_FILES = [
+  "omw-thai-wordnet.tab",
+  "omw-thai-wiktionary.tab",
+  "omw-thai-cldr.tab",
+];
+
 function slugify(value) {
   return value
     .trim()
@@ -198,8 +213,94 @@ function loadExistingKeys() {
   return { slugs, words };
 }
 
-function loadDataGlosses(dataFileName) {
-  const filePath = path.join(wordnetDb.path, dataFileName);
+async function ensureWordNet30Dict() {
+  const dictPath = path.join(WORDNET_CACHE_DIR, "dict");
+  if (existsSync(path.join(dictPath, "index.noun"))) {
+    return dictPath;
+  }
+
+  const packageRoot = path.dirname(
+    require.resolve("wndb-with-exceptions/package.json"),
+  );
+  const tarballPath = path.join(packageRoot, "WNdb-3.0.tar.gz");
+  if (!existsSync(tarballPath)) {
+    throw new Error(
+      "Missing WordNet 3.0 tarball. Run `pnpm install` before generating vocabulary.",
+    );
+  }
+
+  mkdirSync(WORDNET_CACHE_DIR, { recursive: true });
+  await extractTar({
+    file: tarballPath,
+    cwd: WORDNET_CACHE_DIR,
+  });
+
+  return dictPath;
+}
+
+function cleanThaiLemma(value) {
+  const lemma = value
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/[;|]+/g, ",")
+    .trim();
+
+  if (!lemma || !/[\u0E00-\u0E7F]/.test(lemma)) {
+    return null;
+  }
+
+  if (lemma.length > 48) {
+    return null;
+  }
+
+  return lemma;
+}
+
+function loadThaiTranslations() {
+  const bySynset = new Map();
+
+  for (const fileName of THAI_TRANSLATION_FILES) {
+    const filePath = path.join(DATA_DIR, fileName);
+    if (!existsSync(filePath)) {
+      continue;
+    }
+
+    for (const line of readFileSync(filePath, "utf8").split(/\r?\n/)) {
+      if (!line || line.startsWith("#")) {
+        continue;
+      }
+
+      const [synsetId, relation, ...rawValueParts] = line.split("\t");
+      if (!synsetId || !relation?.includes("lemma")) {
+        continue;
+      }
+
+      const lemma = cleanThaiLemma(rawValueParts.join("\t"));
+      if (!lemma) {
+        continue;
+      }
+
+      if (!bySynset.has(synsetId)) {
+        bySynset.set(synsetId, []);
+      }
+
+      const translations = bySynset.get(synsetId);
+      if (!translations.includes(lemma)) {
+        translations.push(lemma);
+      }
+    }
+  }
+
+  return bySynset;
+}
+
+function definitionThForSynset(thaiTranslations, synsetId) {
+  const translations = thaiTranslations.get(synsetId) ?? [];
+  return translations.slice(0, 4).join(", ") || null;
+}
+
+function loadDataGlosses(dictPath, dataFileName) {
+  const filePath = path.join(dictPath, dataFileName);
   const glosses = new Map();
 
   for (const line of readFileSync(filePath, "utf8").split(/\r?\n/)) {
@@ -244,13 +345,13 @@ function cleanDefinition(value) {
     .trim();
 }
 
-function loadCandidates() {
+function loadCandidates(dictPath, thaiTranslations) {
   const candidates = [];
   const bestByWord = new Map();
 
   for (const [partOfSpeech, files] of Object.entries(POS_FILES)) {
-    const glosses = loadDataGlosses(files.data);
-    const indexPath = path.join(wordnetDb.path, files.index);
+    const glosses = loadDataGlosses(dictPath, files.data);
+    const indexPath = path.join(dictPath, files.index);
 
     for (const line of readFileSync(indexPath, "utf8").split(/\r?\n/)) {
       if (!/^[a-z]/.test(line)) {
@@ -271,6 +372,7 @@ function loadCandidates() {
       const firstOffsetIndex = 6 + pointerCount;
       const tagSenseCount = Number.parseInt(parts[tagSenseCountIndex] ?? "0", 10);
       const firstOffset = parts[firstOffsetIndex];
+      const synsetId = `${firstOffset}-${files.wordnetPos}`;
       const gloss = firstOffset ? glosses.get(firstOffset) : null;
 
       if (!gloss || hasBlockedGloss(gloss)) {
@@ -290,8 +392,10 @@ function loadCandidates() {
         word: lemma,
         partOfSpeech,
         definition,
+        definitionTh: definitionThForSynset(thaiTranslations, synsetId),
         wordnetExample,
         score,
+        synsetId,
         synsetCount,
         tagSenseCount,
       };
@@ -364,7 +468,7 @@ function originalExample(word, partOfSpeech) {
   return `Learners often meet the word "${word}" in everyday English.`;
 }
 
-function buildRows(candidates, existingKeys) {
+function buildRows(candidates, existingKeys, generatedAt) {
   const available = candidates.filter(
     (candidate) =>
       !existingKeys.words.has(candidate.word) &&
@@ -421,44 +525,54 @@ function buildRows(candidates, existingKeys) {
         cefr_level: cefr,
         difficulty: difficultyForCefr(cefr),
         definition: candidate.definition,
-        definition_th: null,
+        definition_th: candidate.definitionTh,
         example_sentence: originalExample(candidate.word, candidate.partOfSpeech),
         example_sentence_th: null,
         frequency_rank: rank,
         tags: Array.from(tags).sort(),
+        status: candidate.definitionTh ? "published" : "draft",
+        review_status: candidate.definitionTh ? "approved" : "ai_draft",
+        reviewed_at: candidate.definitionTh ? generatedAt : null,
         is_toeic: toeicSet.has(candidate.word),
         is_oxford: coreStyleSet.has(candidate.word),
       };
     });
 }
 
-function main() {
+async function main() {
   mkdirSync(DATA_DIR, { recursive: true });
 
+  const generatedAt = new Date().toISOString();
   const existingKeys = loadExistingKeys();
-  const candidates = loadCandidates();
-  const entries = buildRows(candidates, existingKeys);
+  const dictPath = await ensureWordNet30Dict();
+  const thaiTranslations = loadThaiTranslations();
+  const candidates = loadCandidates(dictPath, thaiTranslations);
+  const entries = buildRows(candidates, existingKeys, generatedAt);
 
   const payload = {
     defaults: {
-      status: "published",
+      status: "draft",
       review_status: "ai_draft",
       source: "imported",
       source_url: "https://wordnet.princeton.edu/",
       license:
-        "WordNet 3.1 License; Engleet original example sentences; learner list curated by Engleet",
+        "WordNet 3.0 License; Open Multilingual WordNet / Thai WordNet translation data; Engleet original example sentences; learner list curated by Engleet",
       reviewed_at: null,
       is_toeic: false,
       is_oxford: false,
       tags: ["wordnet", "engleet-bulk"],
     },
     metadata: {
-      generated_at: new Date().toISOString(),
+      generated_at: generatedAt,
       generator: "scripts/generate-wordnet-vocabulary-seed.mjs",
       note:
-        "Generated from WordNet lemmas and glosses. Examples are original Engleet template sentences. Oxford-style and TOEIC-focused flags are Engleet curation labels, not official Oxford or ETS material.",
+        "Generated from WordNet 3.0 lemmas and glosses. Thai definitions are matched by Open Multilingual WordNet synset IDs when available. Examples are original Engleet template sentences. Oxford-style and TOEIC-focused flags are Engleet curation labels, not official Oxford or ETS material.",
       counts: {
         total: entries.length,
+        published_with_thai: entries.filter((entry) => entry.definition_th)
+          .length,
+        draft_without_thai: entries.filter((entry) => !entry.definition_th)
+          .length,
         oxford_style: entries.filter((entry) => entry.is_oxford).length,
         toeic_focused: entries.filter((entry) => entry.is_toeic).length,
         daily_life: entries.filter((entry) => entry.tags.includes("daily-life"))
@@ -473,4 +587,7 @@ function main() {
   console.log(payload.metadata.counts);
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -14,8 +14,10 @@ pnpm vocab:generate:wordnet
 
 ## Licensing and Labels
 
-- WordNet-derived entries use the WordNet 3.1 license and keep `source_url` pointing to `https://wordnet.princeton.edu/`.
+- WordNet-derived entries use the WordNet 3.0 license and keep `source_url` pointing to `https://wordnet.princeton.edu/`.
+- Thai definitions for generated entries are matched from Open Multilingual WordNet / Thai WordNet synset data when available.
 - Example sentences in generated entries are original Engleet template sentences.
 - `is_oxford` means Engleet's Oxford-style core learning list. It is not a copy of the official Oxford 3000 list.
 - `is_toeic` means TOEIC-focused learning vocabulary. It is not official ETS material and does not include TOEIC test questions.
-- Bulk generated entries are marked `review_status: "ai_draft"` until a human reviews them.
+- Bulk generated entries with Thai definitions are marked `status: "published"` and `review_status: "approved"`.
+- Bulk generated entries without Thai definitions remain `status: "draft"` and `review_status: "ai_draft"` until reviewed and translated.

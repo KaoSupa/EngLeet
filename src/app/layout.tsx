@@ -10,6 +10,8 @@ import AppNavbar, {
 import { getAuthenticatedSession } from "@/lib/auth/session";
 import { getUserIdentity } from "@/lib/users/profile";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.engleet.com";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -21,8 +23,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Engleet",
-  description: "Gamified English learning platform",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Engleet",
+    template: "%s | Engleet",
+  },
+  description:
+    "Gamified English learning for lessons, vocabulary, quizzes, and daily progress.",
+  openGraph: {
+    title: "Engleet",
+    description:
+      "Gamified English learning for lessons, vocabulary, quizzes, and daily progress.",
+    url: siteUrl,
+    siteName: "Engleet",
+    locale: "th_TH",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Engleet",
+    description:
+      "Gamified English learning for lessons, vocabulary, quizzes, and daily progress.",
+  },
 };
 
 export default function RootLayout({
