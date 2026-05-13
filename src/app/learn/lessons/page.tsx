@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, Clock, Sparkles } from "lucide-react";
 
+import LessonFilters from "@/components/lessons/LessonFilters";
+import SafeImage from "@/components/media/SafeImage";
 import { getPublishedLessons } from "@/lib/learning/lessons";
+import { parseLessonFilters } from "@/lib/learning/lessons";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -10,9 +13,18 @@ export const metadata: Metadata = {
   description: "เรียนภาษาอังกฤษแบบเป็นบทเรียน พร้อม quiz และ XP",
 };
 
-export default async function LessonsPage() {
+type LessonsPageSearchParams = Promise<
+  Record<string, string | string[] | undefined>
+>;
+
+export default async function LessonsPage({
+  searchParams,
+}: {
+  searchParams: LessonsPageSearchParams;
+}) {
+  const filters = parseLessonFilters(await searchParams);
   const supabase = await createClient();
-  const { lessons, error } = await getPublishedLessons(supabase);
+  const { lessons, error } = await getPublishedLessons(supabase, filters);
 
   return (
     <main className="min-h-screen bg-background px-4 py-8 sm:px-6">
@@ -34,6 +46,8 @@ export default async function LessonsPage() {
           </div>
         )}
 
+        <LessonFilters filters={filters} total={lessons.length} />
+
         {lessons.length === 0 ? (
           <EmptyLessons />
         ) : (
@@ -45,12 +59,15 @@ export default async function LessonsPage() {
                 className="group flex min-h-64 flex-col overflow-hidden rounded-lg border bg-card shadow-sm transition-colors hover:bg-muted/40"
               >
                 {lesson.thumbnail_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={lesson.thumbnail_url}
-                    alt=""
-                    className="h-36 w-full object-cover"
-                  />
+                  <div className="relative h-36 w-full bg-muted">
+                    <SafeImage
+                      src={lesson.thumbnail_url}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="flex h-36 items-center justify-center bg-muted">
                     <BookOpen className="size-8 text-muted-foreground" />

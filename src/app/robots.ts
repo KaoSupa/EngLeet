@@ -1,8 +1,6 @@
 import type { MetadataRoute } from "next";
 
-function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.engleet.com";
-}
+import { getSiteUrl } from "@/lib/config/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -11,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin", "/dashboard", "/api"],
     },
-    sitemap: `${siteUrl()}/sitemap.xml`,
+    sitemap: `${getSiteUrl()}/sitemap.xml`,
   };
 }

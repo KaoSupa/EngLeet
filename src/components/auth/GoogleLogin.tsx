@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { buildAuthCallbackUrl } from "@/lib/config/site";
 import { createClient } from "@/lib/supabase/client";
 import { GoogleIcon } from "./UI";
 
@@ -48,17 +49,15 @@ export default function GoogleLogin({
     setLoading(true);
     onError("");
 
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
     const requestedRedirect = getRequestedRedirect();
-
-    if (requestedRedirect) {
-      callbackUrl.searchParams.set("next", requestedRedirect);
-    }
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: callbackUrl.toString(),
+        redirectTo: buildAuthCallbackUrl({
+          origin: window.location.origin,
+          next: requestedRedirect,
+        }),
         skipBrowserRedirect: true,
       },
     });

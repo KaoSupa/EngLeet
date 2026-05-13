@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, BookOpen, Play } from "lucide-react";
@@ -67,11 +68,13 @@ export default function HeroCarousel() {
           )}
           aria-hidden={index !== activeIndex}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={slide.image}
             alt=""
-            className="size-full object-cover"
+            fill
+            priority={index === 0}
+            sizes="100vw"
+            className="object-cover"
           />
         </div>
       ))}

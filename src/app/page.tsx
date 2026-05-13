@@ -15,6 +15,7 @@ import {
 
 import AuthErrorRedirect from "@/components/auth/AuthErrorRedirect";
 import HeroCarousel from "@/components/landing/HeroCarousel";
+import SafeImage from "@/components/media/SafeImage";
 import { Button } from "@/components/ui/button";
 import {
   getFeaturedLessons,
@@ -130,12 +131,15 @@ export default async function Home({
                   className="group overflow-hidden rounded-lg border bg-card shadow-sm transition-colors hover:bg-background"
                 >
                   {lesson.thumbnail_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={lesson.thumbnail_url}
-                      alt=""
-                      className="h-40 w-full object-cover"
-                    />
+                    <div className="relative h-40 w-full bg-muted">
+                      <SafeImage
+                        src={lesson.thumbnail_url}
+                        alt=""
+                        fill
+                        sizes="(min-width: 768px) 33vw, 100vw"
+                        className="object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="flex h-40 items-center justify-center bg-foreground text-background">
                       <GraduationCap className="size-10" />

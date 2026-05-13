@@ -1,3 +1,4 @@
+import SafeImage from "@/components/media/SafeImage";
 import { textToParagraphs, type LessonContentBlock } from "@/lib/learning/lesson-content";
 
 export default function LessonContentBlocks({
@@ -48,12 +49,15 @@ export default function LessonContentBlocks({
         if (block.type === "image") {
           return (
             <figure key={block.id} className="space-y-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={block.url}
-                alt={block.alt}
-                className="w-full rounded-lg border object-cover"
-              />
+              <div className="relative aspect-video overflow-hidden rounded-lg border bg-muted">
+                <SafeImage
+                  src={block.url}
+                  alt={block.alt}
+                  fill
+                  sizes="(min-width: 1024px) 768px, 100vw"
+                  className="object-cover"
+                />
+              </div>
               {block.caption && (
                 <figcaption className="text-sm text-muted-foreground">
                   {block.caption}

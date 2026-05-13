@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BookOpen, Search, Tags } from "lucide-react";
+import { BookOpen, Newspaper, Search, Tags } from "lucide-react";
 
 export default function LearnPage() {
   return (
@@ -17,7 +17,7 @@ export default function LearnPage() {
           </p>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <LearningCard
             title="Lessons"
             description="บทเรียนแบบสั้นพร้อม quiz ที่ผู้ดูแลเพิ่มและเผยแพร่ได้"
@@ -35,6 +35,12 @@ export default function LearnPage() {
             description="ค้นคำศัพท์และดูรายละเอียดเพื่อใช้กับข่าวหรือบทเรียน"
             href="/dictionary"
             icon={<Search className="size-5" />}
+          />
+          <LearningCard
+            title="News"
+            description="Read real-world English articles and prepare for vocabulary extraction and TTS."
+            href="/news"
+            icon={<Newspaper className="size-5" />}
           />
         </section>
       </div>

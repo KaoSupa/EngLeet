@@ -5,6 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { CheckCircle2, Loader2, Lock, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { trackQuizSubmit } from "@/lib/analytics/events";
 import type { LessonQuizQuestion } from "@/lib/learning/lessons";
 
 type QuizResult = {
@@ -109,6 +110,12 @@ export default function LessonQuiz({
       }
 
       setResult(payload.data);
+      trackQuizSubmit({
+        lessonId,
+        score: payload.data.score,
+        percentage: payload.data.percentage,
+        passed: payload.data.passed,
+      });
     });
   }
 

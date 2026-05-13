@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { getRoleFromAppMetadata } from "@/lib/auth/claims";
 import { getPostAuthRedirect } from "@/lib/auth/redirect";
+import { buildAuthCallbackUrl } from "@/lib/config/site";
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
@@ -108,18 +109,16 @@ export function RegisterForm() {
 
     setLoading(true);
 
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
     const requestedRedirect = getRequestedRedirect();
-
-    if (requestedRedirect) {
-      callbackUrl.searchParams.set("next", requestedRedirect);
-    }
 
     const { data, error } = await supabase.auth.signUp({
       email: trimmedEmail,
       password,
       options: {
-        emailRedirectTo: callbackUrl.toString(),
+        emailRedirectTo: buildAuthCallbackUrl({
+          origin: window.location.origin,
+          next: requestedRedirect,
+        }),
       },
     });
 

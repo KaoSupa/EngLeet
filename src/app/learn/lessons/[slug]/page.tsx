@@ -7,6 +7,8 @@ import { ArrowLeft, Clock, Sparkles } from "lucide-react";
 import CompleteLessonButton from "@/components/lessons/CompleteLessonButton";
 import LessonContentBlocks from "@/components/lessons/LessonContentBlocks";
 import LessonQuiz from "@/components/lessons/LessonQuiz";
+import LessonViewAnalytics from "@/components/lessons/LessonViewAnalytics";
+import SafeImage from "@/components/media/SafeImage";
 import { getAuthenticatedSession } from "@/lib/auth/session";
 import { getPublishedLessonBySlug } from "@/lib/learning/lessons";
 import { createClient } from "@/lib/supabase/server";
@@ -49,6 +51,12 @@ export default async function LessonDetailPage({ params }: LessonRouteProps) {
 
   return (
     <main className="min-h-screen bg-background px-4 py-8 sm:px-6">
+      <LessonViewAnalytics
+        lessonId={lesson.id}
+        slug={lesson.slug}
+        category={lesson.category}
+        level={lesson.cefr_level}
+      />
       <article className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0 space-y-8">
           <Link
@@ -87,12 +95,16 @@ export default async function LessonDetailPage({ params }: LessonRouteProps) {
           </header>
 
           {lesson.thumbnail_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={lesson.thumbnail_url}
-              alt=""
-              className="max-h-[440px] w-full rounded-lg border object-cover"
-            />
+            <div className="relative aspect-[16/9] max-h-[440px] overflow-hidden rounded-lg border bg-muted">
+              <SafeImage
+                src={lesson.thumbnail_url}
+                alt=""
+                fill
+                priority
+                sizes="(min-width: 1024px) 768px, 100vw"
+                className="object-cover"
+              />
+            </div>
           )}
 
           <LessonContentBlocks blocks={lesson.contents} />

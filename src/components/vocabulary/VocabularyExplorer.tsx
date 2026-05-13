@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { trackVocabularySave } from "@/lib/analytics/events";
 import type {
   VocabularyFilters,
   VocabularyItem,
@@ -100,6 +101,12 @@ export default function VocabularyExplorer({
       setOptimisticSavedIds((current) =>
         current.includes(vocabulary.id) ? current : [...current, vocabulary.id],
       );
+      trackVocabularySave({
+        vocabularyId: vocabulary.id,
+        word: vocabulary.word,
+        level: vocabulary.cefr_level,
+        partOfSpeech: vocabulary.part_of_speech,
+      });
     } catch {
       setSaveError("บันทึกคำศัพท์ไม่สำเร็จ โปรดลองใหม่อีกครั้ง");
     } finally {

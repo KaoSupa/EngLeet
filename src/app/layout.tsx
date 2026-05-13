@@ -8,9 +8,10 @@ import AppNavbar, {
   type AppNavbarUser,
 } from "@/components/navigation/AppNavbar";
 import { getAuthenticatedSession } from "@/lib/auth/session";
+import { getSiteUrl } from "@/lib/config/site";
 import { getUserIdentity } from "@/lib/users/profile";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.engleet.com";
+const siteUrl = getSiteUrl();
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

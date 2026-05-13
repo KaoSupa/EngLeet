@@ -20,6 +20,8 @@ export default function AppNavbar({ user }: { user: AppNavbarUser | null }) {
             <NavLink href="/learn">Learn</NavLink>
             <NavLink href="/learn/lessons">Lessons</NavLink>
             <NavLink href="/learn/vocabulary">Vocabulary</NavLink>
+            <NavLink href="/dictionary">Dictionary</NavLink>
+            <NavLink href="/news">News</NavLink>
             {user && <NavLink href="/dashboard">Dashboard</NavLink>}
             {user?.role === "admin" && <NavLink href="/admin">Admin</NavLink>}
           </nav>

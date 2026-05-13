@@ -9,8 +9,28 @@ import type { Database } from "@/types/supabase";
 type LessonRow = Database["public"]["Tables"]["lessons"]["Row"];
 type LessonContentRow = Database["public"]["Tables"]["lesson_contents"]["Row"];
 type QuizQuestionRow = Database["public"]["Tables"]["quiz_questions"]["Row"];
+type CefrLevel = Database["public"]["Enums"]["cefr_level"];
+type LessonCategory = Database["public"]["Enums"]["lesson_category"];
 type PublicQuizOptionRow =
   Database["public"]["Views"]["public_quiz_options"]["Row"];
+
+export const LESSON_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+export const LESSON_CATEGORIES = [
+  "vocabulary",
+  "grammar",
+  "pronunciation",
+  "listening",
+  "reading",
+  "writing",
+  "speaking",
+  "conversation",
+] as const;
+
+export type LessonFilters = {
+  q: string;
+  level: CefrLevel | "all";
+  category: LessonCategory | "all";
+};
 
 export type LessonListItem = Pick<
   LessonRow,
@@ -57,8 +77,46 @@ const LESSON_LIST_SELECT = `
   units(title, courses(title))
 `;
 
-function lessonSortQuery(supabase: SupabaseClient<Database>) {
-  return supabase
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function trimFilter(value: string | undefined, maxLength = 80) {
+  return value?.trim().slice(0, maxLength) ?? "";
+}
+
+function sanitizeIlikeValue(value: string) {
+  return value.replace(/[%_,*]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function isLessonLevel(value: string): value is CefrLevel {
+  return LESSON_LEVELS.includes(value as (typeof LESSON_LEVELS)[number]);
+}
+
+function isLessonCategory(value: string): value is LessonCategory {
+  return LESSON_CATEGORIES.includes(
+    value as (typeof LESSON_CATEGORIES)[number],
+  );
+}
+
+export function parseLessonFilters(
+  searchParams: Record<string, string | string[] | undefined>,
+): LessonFilters {
+  const level = trimFilter(firstParam(searchParams.level));
+  const category = trimFilter(firstParam(searchParams.category));
+
+  return {
+    q: trimFilter(firstParam(searchParams.q)),
+    level: isLessonLevel(level) ? level : "all",
+    category: isLessonCategory(category) ? category : "all",
+  };
+}
+
+function lessonSortQuery(
+  supabase: SupabaseClient<Database>,
+  filters?: LessonFilters,
+) {
+  let query = supabase
     .from("lessons")
     .select(LESSON_LIST_SELECT)
     .eq("status", "published")
@@ -66,6 +124,23 @@ function lessonSortQuery(supabase: SupabaseClient<Database>) {
     .order("order_index", { ascending: true })
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("title", { ascending: true });
+
+  if (filters?.q) {
+    const search = sanitizeIlikeValue(filters.q);
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+  }
+
+  if (filters?.level !== undefined && filters.level !== "all") {
+    query = query.eq("cefr_level", filters.level);
+  }
+
+  if (filters?.category !== undefined && filters.category !== "all") {
+    query = query.eq("category", filters.category);
+  }
+
+  return query;
 }
 
 function getNestedTitle(
@@ -117,8 +192,11 @@ function toLessonListItem(
   };
 }
 
-export async function getPublishedLessons(supabase: SupabaseClient<Database>) {
-  const { data, error } = await lessonSortQuery(supabase);
+export async function getPublishedLessons(
+  supabase: SupabaseClient<Database>,
+  filters?: LessonFilters,
+) {
+  const { data, error } = await lessonSortQuery(supabase, filters);
 
   if (error) {
     return { lessons: [] as LessonListItem[], error: error.message };
