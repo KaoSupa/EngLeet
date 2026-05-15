@@ -968,6 +968,17 @@ export type Database = {
         }
         Returns: string
       }
+      server_take_rate_limit: {
+        Args: {
+          p_key: string
+          p_limit: number
+          p_window_seconds: number
+        }
+        Returns: {
+          allowed: boolean
+          retry_after_seconds: number
+        }[]
+      }
       server_review_vocabulary: {
         Args: { p_quality: number; p_user_id: string; p_vocabulary_id: string }
         Returns: undefined

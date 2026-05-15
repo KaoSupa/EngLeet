@@ -117,7 +117,10 @@ function isPartOfSpeech(value: string): value is PartOfSpeech {
 }
 
 function sanitizeIlikeValue(value: string) {
-  return value.replace(/[%_,*]/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function parseVocabularyFilters(
@@ -235,9 +238,10 @@ export async function getVocabularyPageData({
     };
   }
 
+  const countStrategy = filters.savedOnly ? "exact" : "planned";
   let query = supabase
     .from("vocabulary")
-    .select(VOCABULARY_SELECT, { count: "exact" })
+    .select(VOCABULARY_SELECT, { count: countStrategy })
     .eq("status", "published")
     .eq("review_status", "approved")
     .order("frequency_rank", { ascending: true, nullsFirst: false })

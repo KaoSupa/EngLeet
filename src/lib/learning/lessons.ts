@@ -32,6 +32,11 @@ export type LessonFilters = {
   category: LessonCategory | "all";
 };
 
+type LessonQueryOptions = {
+  limit?: number;
+  offset?: number;
+};
+
 export type LessonListItem = Pick<
   LessonRow,
   | "id"
@@ -86,7 +91,10 @@ function trimFilter(value: string | undefined, maxLength = 80) {
 }
 
 function sanitizeIlikeValue(value: string) {
-  return value.replace(/[%_,*]/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function isLessonLevel(value: string): value is CefrLevel {
@@ -195,8 +203,23 @@ function toLessonListItem(
 export async function getPublishedLessons(
   supabase: SupabaseClient<Database>,
   filters?: LessonFilters,
+  options?: LessonQueryOptions,
 ) {
-  const { data, error } = await lessonSortQuery(supabase, filters);
+  const safeLimit =
+    options?.limit && Number.isInteger(options.limit)
+      ? Math.min(Math.max(options.limit, 1), 100)
+      : null;
+  const safeOffset =
+    options?.offset && Number.isInteger(options.offset)
+      ? Math.max(options.offset, 0)
+      : 0;
+  let query = lessonSortQuery(supabase, filters);
+
+  if (safeLimit) {
+    query = query.range(safeOffset, safeOffset + safeLimit - 1);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return { lessons: [] as LessonListItem[], error: error.message };
@@ -223,37 +246,18 @@ export async function getFeaturedLessons({
   supabase: SupabaseClient<Database>;
   limit?: number;
 }) {
-  const { lessons, error } = await getPublishedLessons(supabase);
+  const { lessons, error } = await getPublishedLessons(supabase, undefined, {
+    limit: Math.max(limit * 4, limit),
+  });
   if (error || lessons.length === 0) {
     return { lessons, error };
   }
 
-  const lessonIds = lessons.map((lesson) => lesson.id);
-  const [{ data: attempts }, { data: completions }] = await Promise.all([
-    supabase.from("quiz_attempts").select("lesson_id").in("lesson_id", lessonIds),
-    supabase
-      .from("user_progress")
-      .select("lesson_id")
-      .in("lesson_id", lessonIds)
-      .eq("status", "completed"),
-  ]);
-  const attemptsByLesson = countRowsByLesson(attempts ?? []);
-  const completionsByLesson = countRowsByLesson(completions ?? []);
-
   return {
     lessons: [...lessons]
       .sort((a, b) => {
-        const scoreA =
-          (completionsByLesson.get(a.id) ?? 0) * 5 +
-          (attemptsByLesson.get(a.id) ?? 0) * 2 +
-          a.questionCount;
-        const scoreB =
-          (completionsByLesson.get(b.id) ?? 0) * 5 +
-          (attemptsByLesson.get(b.id) ?? 0) * 2 +
-          b.questionCount;
-
         return (
-          scoreB - scoreA ||
+          b.questionCount - a.questionCount ||
           (b.published_at ?? "").localeCompare(a.published_at ?? "") ||
           a.title.localeCompare(b.title)
         );
@@ -261,14 +265,6 @@ export async function getFeaturedLessons({
       .slice(0, limit),
     error: null,
   };
-}
-
-function countRowsByLesson(rows: { lesson_id: string }[]) {
-  const counts = new Map<string, number>();
-  rows.forEach((row) => {
-    counts.set(row.lesson_id, (counts.get(row.lesson_id) ?? 0) + 1);
-  });
-  return counts;
 }
 
 async function getQuestionCounts(

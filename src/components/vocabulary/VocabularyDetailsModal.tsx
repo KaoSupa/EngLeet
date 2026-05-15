@@ -37,17 +37,23 @@ export function VocabularyDetailsModal({
             {item.word}
           </h2>
           <div className="mt-2 flex flex-wrap gap-2">
-            {item.phonetic && <VocabularyBadge>{item.phonetic}</VocabularyBadge>}
+            {item.phonetic && (
+              <VocabularyBadge tone="source">{item.phonetic}</VocabularyBadge>
+            )}
             {item.part_of_speech && (
-              <VocabularyBadge>
+              <VocabularyBadge tone="part">
                 {formatPartOfSpeech(item.part_of_speech)}
               </VocabularyBadge>
             )}
             {item.cefr_level && (
-              <VocabularyBadge>{item.cefr_level}</VocabularyBadge>
+              <VocabularyBadge value={item.cefr_level}>
+                {item.cefr_level}
+              </VocabularyBadge>
             )}
             {item.difficulty && (
-              <VocabularyBadge>Difficulty {item.difficulty}/5</VocabularyBadge>
+              <VocabularyBadge tone="difficulty">
+                Difficulty {item.difficulty}/5
+              </VocabularyBadge>
             )}
           </div>
         </div>

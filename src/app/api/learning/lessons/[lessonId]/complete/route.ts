@@ -22,7 +22,7 @@ export async function POST(
   }
 
   try {
-    assertRateLimit({
+    await assertRateLimit({
       key: getRateLimitIdentity({
         prefix: "lesson-complete",
         userId: user.id,

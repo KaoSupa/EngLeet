@@ -5,6 +5,7 @@ import { ExternalLink, Newspaper } from "lucide-react";
 import SafeImage from "@/components/media/SafeImage";
 import NewsFilters from "@/components/news/NewsFilters";
 import { Button } from "@/components/ui/button";
+import { LearningBadge } from "@/components/ui/learning-badge";
 import {
   getNewsArticles,
   parseNewsFilters,
@@ -90,16 +91,16 @@ export default async function NewsPage({
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                     {article.source && (
-                      <span className="rounded-md border px-2 py-1">
+                      <LearningBadge tone="source">
                         {article.source}
-                      </span>
+                      </LearningBadge>
                     )}
                     {article.publishedAt && (
-                      <span className="rounded-md border px-2 py-1">
+                      <LearningBadge>
                         {new Date(article.publishedAt).toLocaleDateString(
                           "en-US",
                         )}
-                      </span>
+                      </LearningBadge>
                     )}
                   </div>
                   <h2 className="mt-4 text-lg font-semibold leading-snug">

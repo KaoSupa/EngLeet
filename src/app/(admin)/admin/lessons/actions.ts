@@ -216,7 +216,7 @@ export async function saveLessonAction(
   formData: FormData,
 ): Promise<LessonFormState> {
   const { user } = await requireAdmin("/admin/lessons");
-  assertRateLimit({
+  await assertRateLimit({
     key: getRateLimitIdentity({
       prefix: "admin-lesson-save",
       userId: user.id,
@@ -317,7 +317,7 @@ export async function saveLessonAction(
 
 export async function deleteLessonAction(formData: FormData) {
   const { user } = await requireAdmin("/admin/lessons");
-  assertRateLimit({
+  await assertRateLimit({
     key: getRateLimitIdentity({
       prefix: "admin-lesson-delete",
       userId: user.id,

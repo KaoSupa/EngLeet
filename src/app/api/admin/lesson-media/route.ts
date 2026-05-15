@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { assertRateLimit, getRateLimitIdentity } from "@/lib/api/rate-limit";
+import {
+  assertRateLimit,
+  getRateLimitIdentity,
+  RateLimitError,
+} from "@/lib/api/rate-limit";
 import { getApiAdmin } from "@/lib/auth/api";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -28,7 +32,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    assertRateLimit({
+    await assertRateLimit({
       key: getRateLimitIdentity({
         prefix: "admin-lesson-media",
         userId: user.id,
@@ -37,9 +41,14 @@ export async function POST(request: Request) {
       windowMs: 60_000,
     });
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof RateLimitError) {
       return NextResponse.json({ error: error.message }, { status: 429 });
     }
+
+    return NextResponse.json(
+      { error: "Unable to validate request limit" },
+      { status: 500 },
+    );
   }
 
   const formData = await request.formData().catch(() => null);

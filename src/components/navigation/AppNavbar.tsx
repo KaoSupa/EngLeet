@@ -1,5 +1,8 @@
 import Link from "next/link";
-import UserMenu from "./UserMenu";
+import {
+  AppNavbarAccount,
+  AppNavbarUserLinks,
+} from "./AppNavbarAuth";
 
 export type AppNavbarUser = {
   displayName: string;
@@ -8,7 +11,7 @@ export type AppNavbarUser = {
   role: "user" | "admin";
 };
 
-export default function AppNavbar({ user }: { user: AppNavbarUser | null }) {
+export default function AppNavbar() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -22,34 +25,11 @@ export default function AppNavbar({ user }: { user: AppNavbarUser | null }) {
             <NavLink href="/learn/vocabulary">Vocabulary</NavLink>
             <NavLink href="/dictionary">Dictionary</NavLink>
             <NavLink href="/news">News</NavLink>
-            {user && <NavLink href="/dashboard">Dashboard</NavLink>}
-            {user?.role === "admin" && <NavLink href="/admin">Admin</NavLink>}
+            <AppNavbarUserLinks />
           </nav>
         </div>
 
-        {user ? (
-          <UserMenu
-            displayName={user.displayName}
-            email={user.email}
-            avatarUrl={user.avatarUrl}
-            role={user.role}
-          />
-        ) : (
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              Login
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Sign up
-            </Link>
-          </div>
-        )}
+        <AppNavbarAccount />
       </div>
     </header>
   );

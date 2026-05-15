@@ -18,7 +18,7 @@ export async function POST(
   }
 
   try {
-    assertRateLimit({
+    await assertRateLimit({
       key: getRateLimitIdentity({
         prefix: "vocabulary-save",
         userId: user.id,

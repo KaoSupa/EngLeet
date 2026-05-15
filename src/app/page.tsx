@@ -18,6 +18,10 @@ import HeroCarousel from "@/components/landing/HeroCarousel";
 import SafeImage from "@/components/media/SafeImage";
 import { Button } from "@/components/ui/button";
 import {
+  getLearningBadgeTone,
+  LearningBadge,
+} from "@/components/ui/learning-badge";
+import {
   getFeaturedLessons,
   getPublishedLessons,
   type LessonListItem,
@@ -148,13 +152,13 @@ export default async function Home({
                   <div className="space-y-3 p-5">
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                       {lesson.cefr_level && (
-                        <span className="rounded-md border px-2 py-1">
+                        <LearningBadge tone={getLearningBadgeTone(lesson.cefr_level)}>
                           {lesson.cefr_level}
-                        </span>
+                        </LearningBadge>
                       )}
-                      <span className="rounded-md border px-2 py-1">
+                      <LearningBadge tone="category">
                         {lesson.category}
-                      </span>
+                      </LearningBadge>
                     </div>
                     <h3 className="text-lg font-semibold group-hover:text-primary">
                       {lesson.title}

@@ -24,7 +24,7 @@ export async function POST(
   }
 
   try {
-    assertRateLimit({
+    await assertRateLimit({
       key: getRateLimitIdentity({
         prefix: "quiz-submit",
         userId: user.id,

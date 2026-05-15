@@ -9,6 +9,10 @@ import LessonContentBlocks from "@/components/lessons/LessonContentBlocks";
 import LessonQuiz from "@/components/lessons/LessonQuiz";
 import LessonViewAnalytics from "@/components/lessons/LessonViewAnalytics";
 import SafeImage from "@/components/media/SafeImage";
+import {
+  getLearningBadgeTone,
+  LearningBadge,
+} from "@/components/ui/learning-badge";
 import { getAuthenticatedSession } from "@/lib/auth/session";
 import { getPublishedLessonBySlug } from "@/lib/learning/lessons";
 import { createClient } from "@/lib/supabase/server";
@@ -70,17 +74,17 @@ export default async function LessonDetailPage({ params }: LessonRouteProps) {
           <header className="space-y-4">
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               {lesson.cefr_level && (
-                <span className="rounded-md border px-2 py-1">
+                <LearningBadge tone={getLearningBadgeTone(lesson.cefr_level)}>
                   {lesson.cefr_level}
-                </span>
+                </LearningBadge>
               )}
-              <span className="rounded-md border px-2 py-1">
+              <LearningBadge tone="category">
                 {lesson.category}
-              </span>
+              </LearningBadge>
               {lesson.unitTitle && (
-                <span className="rounded-md border px-2 py-1">
+                <LearningBadge tone="source">
                   {lesson.unitTitle}
-                </span>
+                </LearningBadge>
               )}
             </div>
 

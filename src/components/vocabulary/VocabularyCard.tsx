@@ -36,15 +36,21 @@ export function VocabularyCard({
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {item.part_of_speech && (
-              <VocabularyBadge>
+              <VocabularyBadge tone="part">
                 {formatPartOfSpeech(item.part_of_speech)}
               </VocabularyBadge>
             )}
             {item.cefr_level && (
-              <VocabularyBadge>{item.cefr_level}</VocabularyBadge>
+              <VocabularyBadge value={item.cefr_level}>
+                {item.cefr_level}
+              </VocabularyBadge>
             )}
-            {item.is_toeic && <VocabularyBadge>TOEIC</VocabularyBadge>}
-            {item.is_oxford && <VocabularyBadge>Oxford</VocabularyBadge>}
+            {item.is_toeic && (
+              <VocabularyBadge value="toeic">TOEIC</VocabularyBadge>
+            )}
+            {item.is_oxford && (
+              <VocabularyBadge value="oxford">Oxford</VocabularyBadge>
+            )}
           </div>
         </div>
 

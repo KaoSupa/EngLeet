@@ -1,3 +1,7 @@
+"server-only";
+
+import { createServiceClient } from "@/lib/supabase/service";
+
 type Bucket = {
   count: number;
   resetAt: number;
@@ -15,7 +19,7 @@ export class RateLimitError extends Error {
   }
 }
 
-export function assertRateLimit({
+function assertMemoryRateLimit({
   key,
   limit,
   windowMs,
@@ -40,6 +44,41 @@ export function assertRateLimit({
   }
 
   existing.count += 1;
+}
+
+export async function assertRateLimit({
+  key,
+  limit,
+  windowMs,
+}: {
+  key: string;
+  limit: number;
+  windowMs: number;
+}) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    assertMemoryRateLimit({ key, limit, windowMs });
+    return;
+  }
+
+  const supabase = createServiceClient();
+  const { data, error } = await supabase.rpc("server_take_rate_limit", {
+    p_key: key,
+    p_limit: limit,
+    p_window_seconds: Math.max(1, Math.ceil(windowMs / 1000)),
+  });
+
+  if (error) {
+    throw new Error("Rate limit check failed");
+  }
+
+  const result = data?.[0];
+
+  if (!result?.allowed) {
+    throw new RateLimitError(
+      "Too many requests. Please wait before trying again.",
+      result?.retry_after_seconds ?? 1,
+    );
+  }
 }
 
 export function getRateLimitIdentity({
