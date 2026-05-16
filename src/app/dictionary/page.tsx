@@ -61,6 +61,7 @@ export default async function DictionaryPage({
           savedVocabularyIds={data.savedVocabularyIds}
           isAuthenticated={Boolean(user)}
           total={data.total}
+          initialNextCursor={data.nextCursor}
           error={data.error}
         />
       </div>

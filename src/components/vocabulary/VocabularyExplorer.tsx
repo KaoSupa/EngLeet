@@ -23,12 +23,14 @@ type VocabularyExplorerProps = {
   savedVocabularyIds: string[];
   isAuthenticated: boolean;
   total: number;
+  initialNextCursor: string | null;
   error: string | null;
 };
 
 type VocabularyPageResponse = {
   items?: VocabularyItem[];
   error?: string | null;
+  nextCursor?: string | null;
 };
 
 export default function VocabularyExplorer({
@@ -38,6 +40,7 @@ export default function VocabularyExplorer({
   savedVocabularyIds,
   isAuthenticated,
   total,
+  initialNextCursor,
   error,
 }: VocabularyExplorerProps) {
   const [selectedVocabulary, setSelectedVocabulary] =
@@ -49,12 +52,20 @@ export default function VocabularyExplorer({
   const [loadingMore, setLoadingMore] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(
+    initialNextCursor,
+  );
 
   const savedIds = useMemo(
     () => new Set([...savedVocabularyIds, ...optimisticSavedIds]),
     [optimisticSavedIds, savedVocabularyIds],
   );
   const hasMore = loadedItems.length < total;
+
+  useEffect(() => {
+    setLoadedItems(items);
+    setNextCursor(initialNextCursor);
+  }, [initialNextCursor, items]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -124,7 +135,12 @@ export default function VocabularyExplorer({
 
     try {
       const params = new URLSearchParams(window.location.search);
-      params.set("offset", loadedItems.length.toString());
+      if (nextCursor) {
+        params.set("cursor", nextCursor);
+        params.delete("offset");
+      } else {
+        params.set("offset", loadedItems.length.toString());
+      }
 
       const response = await fetch(`/api/learning/vocabulary?${params}`);
 
@@ -141,6 +157,7 @@ export default function VocabularyExplorer({
       }
 
       appendUniqueItems(data.items ?? []);
+      setNextCursor(data.nextCursor ?? null);
     } catch {
       setLoadMoreError("โหลดคำศัพท์เพิ่มไม่สำเร็จ โปรดลองใหม่อีกครั้ง");
     } finally {

@@ -3,6 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 
 type VocabularyRow = Database["public"]["Tables"]["vocabulary"]["Row"];
+type VocabularySearchRow =
+  Database["public"]["Functions"]["search_published_vocabulary"]["Returns"][number];
+type VocabularyListRow =
+  Database["public"]["Functions"]["list_published_vocabulary_page"]["Returns"][number];
+type VocabularyResultRow = VocabularySearchRow | VocabularyListRow;
 type PartOfSpeech = Database["public"]["Enums"]["part_of_speech"];
 type CefrLevel = Database["public"]["Enums"]["cefr_level"];
 
@@ -57,35 +62,17 @@ export type VocabularyPageData = {
   savedVocabularyIds: string[];
   availableTags: string[];
   total: number;
+  nextCursor: string | null;
   error: string | null;
 };
 
-export const VOCABULARY_PAGE_SIZE = 50;
+type VocabularyCursor = {
+  frequencyRank: number | null;
+  word: string;
+  id: string;
+};
 
-const VOCABULARY_SELECT = `
-  id,
-  word,
-  slug,
-  normalized_word,
-  definition,
-  definition_th,
-  example_sentence,
-  example_sentence_th,
-  part_of_speech,
-  cefr_level,
-  difficulty,
-  frequency_rank,
-  phonetic,
-  tags,
-  is_toeic,
-  is_oxford,
-  image_url,
-  tts_audio_url,
-  source,
-  source_url,
-  license,
-  review_status
-`;
+export const VOCABULARY_PAGE_SIZE = 50;
 
 const CEFR_LEVELS: readonly CefrLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const PARTS_OF_SPEECH: readonly PartOfSpeech[] = [
@@ -116,11 +103,54 @@ function isPartOfSpeech(value: string): value is PartOfSpeech {
   return PARTS_OF_SPEECH.includes(value as PartOfSpeech);
 }
 
-function sanitizeIlikeValue(value: string) {
-  return value
-    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+export function decodeVocabularyCursor(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(value, "base64url").toString("utf8"),
+    ) as Partial<VocabularyCursor>;
+
+    if (
+      typeof parsed.id !== "string" ||
+      typeof parsed.word !== "string" ||
+      !(
+        parsed.frequencyRank === null ||
+        typeof parsed.frequencyRank === "number"
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      id: parsed.id,
+      word: parsed.word,
+      frequencyRank: parsed.frequencyRank,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function encodeVocabularyCursor(item: VocabularyItem) {
+  const cursor: VocabularyCursor = {
+    frequencyRank: item.frequency_rank,
+    word: item.word,
+    id: item.id,
+  };
+
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function getNextVocabularyCursor(items: VocabularyItem[], hasMore: boolean) {
+  if (!hasMore) {
+    return null;
+  }
+
+  const lastItem = items.at(-1);
+  return lastItem ? encodeVocabularyCursor(lastItem) : null;
 }
 
 export function parseVocabularyFilters(
@@ -208,94 +238,60 @@ async function getAvailableVocabularyTags(supabase: SupabaseClient<Database>) {
   return Array.from(tags).sort((a, b) => a.localeCompare(b));
 }
 
-export async function getVocabularyPageData({
+function toVocabularyItem(row: VocabularyResultRow): VocabularyItem {
+  return {
+    id: row.id,
+    word: row.word,
+    slug: row.slug,
+    normalized_word: row.normalized_word,
+    definition: row.definition,
+    definition_th: row.definition_th,
+    example_sentence: row.example_sentence,
+    example_sentence_th: row.example_sentence_th,
+    part_of_speech: row.part_of_speech,
+    cefr_level: row.cefr_level,
+    difficulty: row.difficulty,
+    frequency_rank: row.frequency_rank,
+    phonetic: row.phonetic,
+    tags: row.tags,
+    is_toeic: row.is_toeic,
+    is_oxford: row.is_oxford,
+    image_url: row.image_url,
+    tts_audio_url: row.tts_audio_url,
+    source: row.source,
+    source_url: row.source_url,
+    license: row.license,
+    review_status: row.review_status,
+  };
+}
+
+async function searchVocabularyPageData({
   supabase,
   filters,
   userId,
-  offset = 0,
-  includeTags = true,
+  offset,
+  savedVocabularyIds,
+  availableTags,
 }: {
   supabase: SupabaseClient<Database>;
   filters: VocabularyFilters;
   userId: string | null;
-  offset?: number;
-  includeTags?: boolean;
+  offset: number;
+  savedVocabularyIds: string[];
+  availableTags: string[];
 }): Promise<VocabularyPageData> {
-  const safeOffset = Math.max(0, offset);
-  const [savedVocabularyIds, availableTags] = await Promise.all([
-    getSavedVocabularyIds(supabase, userId),
-    includeTags ? getAvailableVocabularyTags(supabase) : Promise.resolve([]),
-  ]);
-  const savedIdSet = new Set(savedVocabularyIds);
-
-  if (filters.savedOnly && !userId) {
-    return {
-      items: [],
-      savedVocabularyIds,
-      availableTags,
-      total: 0,
-      error: null,
-    };
-  }
-
-  const countStrategy = filters.savedOnly ? "exact" : "planned";
-  let query = supabase
-    .from("vocabulary")
-    .select(VOCABULARY_SELECT, { count: countStrategy })
-    .eq("status", "published")
-    .eq("review_status", "approved")
-    .order("frequency_rank", { ascending: true, nullsFirst: false })
-    .order("word", { ascending: true })
-    .range(safeOffset, safeOffset + VOCABULARY_PAGE_SIZE - 1);
-
-  if (filters.q) {
-    const search = sanitizeIlikeValue(filters.q);
-    if (search) {
-      query = query.or(
-        `word.ilike.%${search}%,normalized_word.ilike.%${search}%,definition.ilike.%${search}%,definition_th.ilike.%${search}%`,
-      );
-    }
-  }
-
-  if (filters.level !== "all") {
-    query = query.eq("cefr_level", filters.level);
-  }
-
-  if (filters.part !== "all") {
-    query = query.eq("part_of_speech", filters.part);
-  }
-
-  if (filters.tag) {
-    query = query.contains("tags", [filters.tag]);
-  }
-
-  if (filters.list === "toeic") {
-    query = query.eq("is_toeic", true);
-  }
-
-  if (filters.list === "oxford") {
-    query = query.eq("is_oxford", true);
-  }
-
-  if (filters.difficulty) {
-    query = query.eq("difficulty", filters.difficulty);
-  }
-
-  if (filters.savedOnly) {
-    if (savedVocabularyIds.length === 0) {
-      return {
-        items: [],
-        savedVocabularyIds,
-        availableTags,
-        total: 0,
-        error: null,
-      };
-    }
-
-    query = query.in("id", savedVocabularyIds);
-  }
-
-  const { data, error, count } = await query;
+  const { data, error } = await supabase.rpc("search_published_vocabulary", {
+    p_query: filters.q,
+    p_level: filters.level === "all" ? null : filters.level,
+    p_part: filters.part === "all" ? null : filters.part,
+    p_tag: filters.tag || null,
+    p_list: filters.list,
+    p_difficulty: filters.difficulty,
+    p_saved_user_id: userId,
+    p_saved_only: filters.savedOnly,
+    p_limit: VOCABULARY_PAGE_SIZE,
+    p_offset: offset,
+  });
 
   if (error) {
     return {
@@ -303,17 +299,127 @@ export async function getVocabularyPageData({
       savedVocabularyIds,
       availableTags,
       total: 0,
+      nextCursor: null,
       error: "Unable to load vocabulary right now.",
     };
   }
 
+  const items = (data ?? []).map(toVocabularyItem);
+
   return {
-    items: (data ?? []).filter((item) =>
-      filters.savedOnly ? savedIdSet.has(item.id) : true,
-    ) as VocabularyItem[],
+    items,
     savedVocabularyIds,
     availableTags,
-    total: count ?? data?.length ?? 0,
+    total: data?.[0]?.total_count ?? data?.length ?? 0,
+    nextCursor: null,
     error: null,
   };
+}
+
+async function listVocabularyPageData({
+  supabase,
+  filters,
+  userId,
+  cursor,
+  savedVocabularyIds,
+  availableTags,
+}: {
+  supabase: SupabaseClient<Database>;
+  filters: VocabularyFilters;
+  userId: string | null;
+  cursor: VocabularyCursor | null;
+  savedVocabularyIds: string[];
+  availableTags: string[];
+}): Promise<VocabularyPageData> {
+  const { data, error } = await supabase.rpc("list_published_vocabulary_page", {
+    p_level: filters.level === "all" ? null : filters.level,
+    p_part: filters.part === "all" ? null : filters.part,
+    p_tag: filters.tag || null,
+    p_list: filters.list,
+    p_difficulty: filters.difficulty,
+    p_saved_user_id: userId,
+    p_saved_only: filters.savedOnly,
+    p_after_frequency_rank: cursor?.frequencyRank ?? null,
+    p_after_word: cursor?.word ?? null,
+    p_after_id: cursor?.id ?? null,
+    p_limit: VOCABULARY_PAGE_SIZE + 1,
+  });
+
+  if (error) {
+    return {
+      items: [],
+      savedVocabularyIds,
+      availableTags,
+      total: 0,
+      nextCursor: null,
+      error: "Unable to load vocabulary right now.",
+    };
+  }
+
+  const rows = data ?? [];
+  const items = rows.slice(0, VOCABULARY_PAGE_SIZE).map(toVocabularyItem);
+  const total = rows[0]?.total_count ?? items.length;
+  const hasMore = rows.length > VOCABULARY_PAGE_SIZE;
+
+  return {
+    items,
+    savedVocabularyIds,
+    availableTags,
+    total,
+    nextCursor: getNextVocabularyCursor(items, hasMore),
+    error: null,
+  };
+}
+
+export async function getVocabularyPageData({
+  supabase,
+  filters,
+  userId,
+  offset = 0,
+  cursor = null,
+  includeTags = true,
+}: {
+  supabase: SupabaseClient<Database>;
+  filters: VocabularyFilters;
+  userId: string | null;
+  offset?: number;
+  cursor?: VocabularyCursor | null;
+  includeTags?: boolean;
+}): Promise<VocabularyPageData> {
+  const safeOffset = Math.max(0, offset);
+  const [savedVocabularyIds, availableTags] = await Promise.all([
+    getSavedVocabularyIds(supabase, userId),
+    includeTags ? getAvailableVocabularyTags(supabase) : Promise.resolve([]),
+  ]);
+
+  if (filters.savedOnly && !userId) {
+    return {
+      items: [],
+      savedVocabularyIds,
+      availableTags,
+      total: 0,
+      nextCursor: null,
+      error: null,
+    };
+  }
+
+  if (filters.q) {
+    return searchVocabularyPageData({
+      supabase,
+      filters,
+      userId,
+      offset: safeOffset,
+      savedVocabularyIds,
+      availableTags,
+    });
+  }
+
+  return listVocabularyPageData({
+    supabase,
+    filters,
+    userId,
+    cursor,
+    savedVocabularyIds,
+    availableTags,
+  });
 }

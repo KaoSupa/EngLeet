@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/learning-badge";
 import { getPublishedLessons } from "@/lib/learning/lessons";
 import { parseLessonFilters } from "@/lib/learning/lessons";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicDataClient } from "@/lib/supabase/public";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Lessons | Engleet",
@@ -27,7 +29,7 @@ export default async function LessonsPage({
   searchParams: LessonsPageSearchParams;
 }) {
   const filters = parseLessonFilters(await searchParams);
-  const supabase = await createClient();
+  const supabase = createPublicDataClient();
   const { lessons, error } = await getPublishedLessons(supabase, filters);
 
   return (

@@ -105,6 +105,29 @@ export async function saveVocabularyForUser({
   return { ok: true };
 }
 
+export async function recordStudyActivityForUser({
+  userId,
+  studyTimeSeconds,
+}: {
+  userId: string;
+  studyTimeSeconds: number;
+}) {
+  assertUuid(userId, "userId");
+
+  const supabase = createServiceClient();
+  const { error } = await supabase.rpc("record_activity_internal", {
+    p_user_id: userId,
+    p_xp_earned: 0,
+    p_study_time_seconds: studyTimeSeconds,
+  });
+
+  if (error) {
+    throw toLearningRpcError(error);
+  }
+
+  return { ok: true };
+}
+
 export async function reviewVocabularyForUser({
   userId,
   vocabularyId,

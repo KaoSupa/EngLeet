@@ -82,10 +82,12 @@ export async function getDashboardSummary(
     };
   }
 
+  const stats = toDashboardStats(data);
+
   return {
     summary: {
       profile: null,
-      stats: toDashboardStats(data),
+      stats,
     },
     error: null,
   };

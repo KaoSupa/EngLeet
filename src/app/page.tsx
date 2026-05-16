@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   BookMarked,
@@ -23,35 +22,13 @@ import {
 } from "@/components/ui/learning-badge";
 import {
   getFeaturedLessons,
-  getPublishedLessons,
   type LessonListItem,
 } from "@/lib/learning/lessons";
-import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createPublicDataClient } from "@/lib/supabase/public";
 
-type HomeSearchParams = Promise<{
-  error?: string | string[];
-}>;
+export const revalidate = 300;
 
-function firstParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function normalizeOAuthError(error: string) {
-  return error === "access_denied" ? "oauth_cancelled" : error;
-}
-
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: HomeSearchParams;
-}) {
-  const params = await searchParams;
-  const error = firstParam(params.error);
-
-  if (error) {
-    redirect(`/login?error=${encodeURIComponent(normalizeOAuthError(error))}`);
-  }
+export default async function Home() {
 
   const featuredLessons = await getHomeFeaturedLessons();
 
@@ -224,7 +201,7 @@ export default async function Home({
 
 async function getHomeFeaturedLessons(): Promise<LessonListItem[]> {
   try {
-    const supabase = createServiceClient();
+    const supabase = createPublicDataClient();
     const { lessons } = await getFeaturedLessons({
       supabase,
       limit: 3,
@@ -232,9 +209,7 @@ async function getHomeFeaturedLessons(): Promise<LessonListItem[]> {
 
     return lessons;
   } catch {
-    const supabase = await createClient();
-    const { lessons } = await getPublishedLessons(supabase);
-    return lessons.slice(0, 3);
+    return [];
   }
 }
 

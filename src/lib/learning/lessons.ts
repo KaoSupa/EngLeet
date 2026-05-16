@@ -9,6 +9,9 @@ import type { Database } from "@/types/supabase";
 type LessonRow = Database["public"]["Tables"]["lessons"]["Row"];
 type LessonContentRow = Database["public"]["Tables"]["lesson_contents"]["Row"];
 type QuizQuestionRow = Database["public"]["Tables"]["quiz_questions"]["Row"];
+type UserProgressRow = Database["public"]["Tables"]["user_progress"]["Row"];
+type LessonSearchRow =
+  Database["public"]["Functions"]["search_published_lessons"]["Returns"][number];
 type CefrLevel = Database["public"]["Enums"]["cefr_level"];
 type LessonCategory = Database["public"]["Enums"]["lesson_category"];
 type PublicQuizOptionRow =
@@ -67,6 +70,11 @@ export type LessonDetail = LessonListItem &
     contents: LessonContentBlock[];
     quizQuestions: LessonQuizQuestion[];
   };
+
+export type UserLessonProgressSummary = Pick<
+  UserProgressRow,
+  "status" | "completed_at" | "best_score" | "attempts" | "time_spent_seconds"
+>;
 
 const LESSON_LIST_SELECT = `
   id,
@@ -200,6 +208,48 @@ function toLessonListItem(
   };
 }
 
+function toLessonSearchItem(row: LessonSearchRow): LessonListItem {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    thumbnail_url: row.thumbnail_url,
+    cefr_level: row.cefr_level,
+    category: row.category,
+    estimated_minutes: row.estimated_minutes,
+    xp_reward: row.xp_reward,
+    published_at: row.published_at,
+    unitTitle: row.unit_title,
+    courseTitle: row.course_title,
+    questionCount: row.question_count,
+  };
+}
+
+async function searchPublishedLessons(
+  supabase: SupabaseClient<Database>,
+  filters: LessonFilters,
+  limit: number,
+  offset: number,
+) {
+  const { data, error } = await supabase.rpc("search_published_lessons", {
+    p_query: filters.q,
+    p_level: filters.level === "all" ? null : filters.level,
+    p_category: filters.category === "all" ? null : filters.category,
+    p_limit: limit,
+    p_offset: offset,
+  });
+
+  if (error) {
+    return { lessons: [] as LessonListItem[], error: error.message };
+  }
+
+  return {
+    lessons: (data ?? []).map(toLessonSearchItem),
+    error: null,
+  };
+}
+
 export async function getPublishedLessons(
   supabase: SupabaseClient<Database>,
   filters?: LessonFilters,
@@ -213,6 +263,16 @@ export async function getPublishedLessons(
     options?.offset && Number.isInteger(options.offset)
       ? Math.max(options.offset, 0)
       : 0;
+
+  if (filters?.q) {
+    return searchPublishedLessons(
+      supabase,
+      filters,
+      safeLimit ?? 100,
+      safeOffset,
+    );
+  }
+
   let query = lessonSortQuery(supabase, filters);
 
   if (safeLimit) {
@@ -329,6 +389,28 @@ export async function getPublishedLessonBySlug({
   };
 
   return { lesson: detail, error: null };
+}
+
+export async function getUserLessonProgress({
+  supabase,
+  userId,
+  lessonId,
+}: {
+  supabase: SupabaseClient<Database>;
+  userId: string;
+  lessonId: string;
+}) {
+  const { data, error } = await supabase
+    .from("user_progress")
+    .select("status, completed_at, best_score, attempts, time_spent_seconds")
+    .eq("user_id", userId)
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  return {
+    progress: error ? null : data,
+    error,
+  };
 }
 
 async function getLessonContents(

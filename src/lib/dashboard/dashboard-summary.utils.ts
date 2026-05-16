@@ -16,15 +16,27 @@ export type DashboardStatItem = {
   iconClassName: string;
 };
 
-export function getLevelProgress(totalXp: number, xpPerLevel = 100) {
+function getXpThresholdForLevel(level: number, xpPerStep: number) {
+  const safeLevel = Math.max(1, Math.floor(level));
+
+  return ((safeLevel - 1) * safeLevel * xpPerStep) / 2;
+}
+
+export function getLevelProgress(totalXp: number, xpPerStep = 100) {
   const safeTotalXp = Math.max(0, totalXp);
-  const safeXpPerLevel = Math.max(1, xpPerLevel);
-  const currentXp = safeTotalXp % safeXpPerLevel;
+  const safeXpPerStep = Math.max(1, xpPerStep);
+  const level =
+    Math.floor((-1 + Math.sqrt(1 + (8 * safeTotalXp) / safeXpPerStep)) / 2) +
+    1;
+  const currentLevelStartXp = getXpThresholdForLevel(level, safeXpPerStep);
+  const nextLevelStartXp = getXpThresholdForLevel(level + 1, safeXpPerStep);
+  const requiredXp = Math.max(1, nextLevelStartXp - currentLevelStartXp);
+  const currentXp = Math.max(0, safeTotalXp - currentLevelStartXp);
 
   return {
     currentXp,
-    requiredXp: safeXpPerLevel,
-    percent: Math.min(100, Math.round((currentXp / safeXpPerLevel) * 100)),
+    requiredXp,
+    percent: Math.min(100, Math.round((currentXp / requiredXp) * 100)),
   };
 }
 
@@ -82,7 +94,7 @@ export function createDashboardStats(
         "bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
     },
     {
-      label: "Vocabulary Mastered",
+      label: "Saved Vocabulary",
       value: stats.vocab_mastered,
       iconName: "languages",
       iconClassName:

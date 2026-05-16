@@ -916,6 +916,46 @@ export type Database = {
           xp_earned: number
         }[]
       }
+      list_published_vocabulary_page: {
+        Args: {
+          p_after_frequency_rank?: number | null
+          p_after_id?: string | null
+          p_after_word?: string | null
+          p_difficulty?: number | null
+          p_level?: Database["public"]["Enums"]["cefr_level"] | null
+          p_limit?: number
+          p_list?: string
+          p_part?: Database["public"]["Enums"]["part_of_speech"] | null
+          p_saved_only?: boolean
+          p_saved_user_id?: string | null
+          p_tag?: string | null
+        }
+        Returns: {
+          cefr_level: Database["public"]["Enums"]["cefr_level"] | null
+          definition: string
+          definition_th: string | null
+          difficulty: number | null
+          example_sentence: string | null
+          example_sentence_th: string | null
+          frequency_rank: number | null
+          id: string
+          image_url: string | null
+          is_oxford: boolean
+          is_toeic: boolean
+          license: string | null
+          normalized_word: string
+          part_of_speech: Database["public"]["Enums"]["part_of_speech"] | null
+          phonetic: string | null
+          review_status: Database["public"]["Enums"]["vocabulary_review_status"]
+          slug: string
+          source: Database["public"]["Enums"]["vocabulary_source"]
+          source_url: string | null
+          tags: string[]
+          total_count: number
+          tts_audio_url: string | null
+          word: string
+        }[]
+      }
       normalize_english: { Args: { value: string }; Returns: string }
       record_activity_internal: {
         Args: {
@@ -940,6 +980,70 @@ export type Database = {
           part_of_speech: Database["public"]["Enums"]["part_of_speech"]
           phonetic: string
           similarity: number
+          word: string
+        }[]
+      }
+      search_published_lessons: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["lesson_category"] | null
+          p_level?: Database["public"]["Enums"]["cefr_level"] | null
+          p_limit?: number
+          p_offset?: number
+          p_query: string
+        }
+        Returns: {
+          category: Database["public"]["Enums"]["lesson_category"]
+          cefr_level: Database["public"]["Enums"]["cefr_level"] | null
+          course_title: string | null
+          description: string | null
+          estimated_minutes: number
+          id: string
+          published_at: string | null
+          question_count: number
+          slug: string
+          thumbnail_url: string | null
+          title: string
+          total_count: number
+          unit_title: string | null
+          xp_reward: number
+        }[]
+      }
+      search_published_vocabulary: {
+        Args: {
+          p_difficulty?: number | null
+          p_level?: Database["public"]["Enums"]["cefr_level"] | null
+          p_limit?: number
+          p_list?: string
+          p_offset?: number
+          p_part?: Database["public"]["Enums"]["part_of_speech"] | null
+          p_query: string
+          p_saved_only?: boolean
+          p_saved_user_id?: string | null
+          p_tag?: string | null
+        }
+        Returns: {
+          cefr_level: Database["public"]["Enums"]["cefr_level"] | null
+          definition: string
+          definition_th: string | null
+          difficulty: number | null
+          example_sentence: string | null
+          example_sentence_th: string | null
+          frequency_rank: number | null
+          id: string
+          image_url: string | null
+          is_oxford: boolean
+          is_toeic: boolean
+          license: string | null
+          normalized_word: string
+          part_of_speech: Database["public"]["Enums"]["part_of_speech"] | null
+          phonetic: string | null
+          review_status: Database["public"]["Enums"]["vocabulary_review_status"]
+          slug: string
+          source: Database["public"]["Enums"]["vocabulary_source"]
+          source_url: string | null
+          tags: string[]
+          total_count: number
+          tts_audio_url: string | null
           word: string
         }[]
       }

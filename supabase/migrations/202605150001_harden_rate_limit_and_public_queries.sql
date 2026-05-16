@@ -104,14 +104,28 @@ from public, anon, authenticated;
 grant execute on function public.server_take_rate_limit(text, integer, integer)
 to service_role;
 
-revoke execute on function public.complete_lesson(uuid, integer)
-from public, anon, authenticated;
-revoke execute on function public.review_vocabulary(uuid, integer)
-from public, anon, authenticated;
-revoke execute on function public.save_vocabulary(uuid)
-from public, anon, authenticated;
-revoke execute on function public.submit_lesson_quiz(uuid, jsonb, integer)
-from public, anon, authenticated;
+do $$
+begin
+  if to_regprocedure('public.complete_lesson(uuid, integer)') is not null then
+    revoke execute on function public.complete_lesson(uuid, integer)
+    from public, anon, authenticated;
+  end if;
+
+  if to_regprocedure('public.review_vocabulary(uuid, integer)') is not null then
+    revoke execute on function public.review_vocabulary(uuid, integer)
+    from public, anon, authenticated;
+  end if;
+
+  if to_regprocedure('public.save_vocabulary(uuid)') is not null then
+    revoke execute on function public.save_vocabulary(uuid)
+    from public, anon, authenticated;
+  end if;
+
+  if to_regprocedure('public.submit_lesson_quiz(uuid, jsonb, integer)') is not null then
+    revoke execute on function public.submit_lesson_quiz(uuid, jsonb, integer)
+    from public, anon, authenticated;
+  end if;
+end $$;
 
 create index if not exists lessons_public_listing_idx
 on public.lessons (status, published_at, order_index, title)

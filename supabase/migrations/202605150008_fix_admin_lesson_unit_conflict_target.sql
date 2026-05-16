@@ -1,5 +1,6 @@
--- Keep admin lesson writes atomic. Browser/server actions call these functions
--- through the Next.js service-role client after requireAdmin() has validated the user.
+-- Match the units table constraint: units are unique per course, not globally
+-- by slug. The previous RPC used ON CONFLICT (slug), which has no matching
+-- unique constraint on the current schema.
 
 create or replace function public.server_admin_upsert_lesson_bundle(
   p_admin_user_id uuid,
@@ -61,7 +62,7 @@ begin
     v_status,
     v_published_at
   )
-  on conflict (course_id, slug) do update
+  on conflict (slug) do update
   set title = excluded.title,
       cefr_level = excluded.cefr_level,
       status = case
@@ -89,7 +90,7 @@ begin
     v_status,
     v_published_at
   )
-  on conflict (slug) do update
+  on conflict (course_id, slug) do update
   set course_id = excluded.course_id,
       title = excluded.title,
       status = case
@@ -237,48 +238,7 @@ begin
 end;
 $$;
 
-create or replace function public.server_admin_delete_lesson_bundle(
-  p_admin_user_id uuid,
-  p_lesson_id uuid
-)
-returns void
-language plpgsql
-security definer
-set search_path = public, private, pg_temp
-as $$
-begin
-  if p_admin_user_id is null or not private.is_admin(p_admin_user_id) then
-    raise exception 'Admin access required';
-  end if;
-
-  if p_lesson_id is null then
-    raise exception 'Lesson id is required';
-  end if;
-
-  delete from public.quiz_answers
-  where attempt_id in (
-    select id from public.quiz_attempts where lesson_id = p_lesson_id
-  )
-  or question_id in (
-    select id from public.quiz_questions where lesson_id = p_lesson_id
-  );
-
-  delete from public.quiz_options
-  where question_id in (
-    select id from public.quiz_questions where lesson_id = p_lesson_id
-  );
-
-  delete from public.quiz_attempts where lesson_id = p_lesson_id;
-  delete from public.quiz_questions where lesson_id = p_lesson_id;
-  delete from public.lesson_vocabulary where lesson_id = p_lesson_id;
-  delete from public.lesson_contents where lesson_id = p_lesson_id;
-  delete from public.user_progress where lesson_id = p_lesson_id;
-  delete from public.lessons where id = p_lesson_id;
-end;
-$$;
-
-revoke execute on function public.server_admin_upsert_lesson_bundle(uuid, jsonb, jsonb, jsonb) from public, anon, authenticated;
-revoke execute on function public.server_admin_delete_lesson_bundle(uuid, uuid) from public, anon, authenticated;
-
-grant execute on function public.server_admin_upsert_lesson_bundle(uuid, jsonb, jsonb, jsonb) to service_role;
-grant execute on function public.server_admin_delete_lesson_bundle(uuid, uuid) to service_role;
+revoke execute on function public.server_admin_upsert_lesson_bundle(uuid, jsonb, jsonb, jsonb)
+from public, anon, authenticated;
+grant execute on function public.server_admin_upsert_lesson_bundle(uuid, jsonb, jsonb, jsonb)
+to service_role;

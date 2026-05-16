@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
+  decodeVocabularyCursor,
   getOptionalApiUser,
   getVocabularyPageData,
   parseVocabularyFilters,
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const filters = parseVocabularyFilters(searchParamsToRecord(url.searchParams));
   const offset = parseOffset(url.searchParams.get("offset"));
+  const cursor = decodeVocabularyCursor(url.searchParams.get("cursor"));
   const supabase = await createClient();
   const user = await getOptionalApiUser(supabase);
   const data = await getVocabularyPageData({
@@ -33,6 +35,7 @@ export async function GET(request: Request) {
     filters,
     userId: user?.id ?? null,
     offset,
+    cursor,
     includeTags: false,
   });
 
@@ -40,6 +43,7 @@ export async function GET(request: Request) {
     items: data.items,
     savedVocabularyIds: data.savedVocabularyIds,
     total: data.total,
+    nextCursor: data.nextCursor,
     error: data.error,
   });
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, Sparkles } from "lucide-react";
 
+import StudyTimeTracker from "@/components/activity/StudyTimeTracker";
 import CompleteLessonButton from "@/components/lessons/CompleteLessonButton";
 import LessonContentBlocks from "@/components/lessons/LessonContentBlocks";
 import LessonQuiz from "@/components/lessons/LessonQuiz";
@@ -14,7 +15,10 @@ import {
   LearningBadge,
 } from "@/components/ui/learning-badge";
 import { getAuthenticatedSession } from "@/lib/auth/session";
-import { getPublishedLessonBySlug } from "@/lib/learning/lessons";
+import {
+  getPublishedLessonBySlug,
+  getUserLessonProgress,
+} from "@/lib/learning/lessons";
 import { createClient } from "@/lib/supabase/server";
 
 type LessonRouteProps = {
@@ -53,6 +57,14 @@ export default async function LessonDetailPage({ params }: LessonRouteProps) {
     notFound();
   }
 
+  const { progress } = user
+    ? await getUserLessonProgress({
+        supabase: publicClient,
+        userId: user.id,
+        lessonId: lesson.id,
+      })
+    : { progress: null };
+
   return (
     <main className="min-h-screen bg-background px-4 py-8 sm:px-6">
       <LessonViewAnalytics
@@ -61,6 +73,7 @@ export default async function LessonDetailPage({ params }: LessonRouteProps) {
         category={lesson.category}
         level={lesson.cefr_level}
       />
+      {user && <StudyTimeTracker />}
       <article className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0 space-y-8">
           <Link
@@ -142,6 +155,9 @@ export default async function LessonDetailPage({ params }: LessonRouteProps) {
             <CompleteLessonButton
               lessonId={lesson.id}
               isAuthenticated={Boolean(user)}
+              initialCompleted={progress?.status === "completed"}
+              xpReward={lesson.xp_reward}
+              estimatedMinutes={lesson.estimated_minutes}
             />
           </div>
         </aside>
