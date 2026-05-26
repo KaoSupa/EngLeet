@@ -118,7 +118,7 @@ as $$
           'english',
           coalesce(l.title, '') || ' ' || coalesce(l.description, '')
         ) @@ plainto_tsquery('english', normalized.q)
-        or lower(l.title) % lower(normalized.q)
+        or lower(l.title) OPERATOR(public.%) lower(normalized.q)
       )
   )
   select
@@ -279,8 +279,8 @@ as $$
           coalesce(v.definition, '') || ' ' ||
           coalesce(v.definition_th, '')
         ) @@ plainto_tsquery('english', normalized.q)
-        or lower(v.word) % lower(normalized.q)
-        or lower(v.normalized_word) % lower(normalized.q)
+        or lower(v.word) OPERATOR(public.%) lower(normalized.q)
+        or lower(v.normalized_word) OPERATOR(public.%) lower(normalized.q)
       )
   )
   select

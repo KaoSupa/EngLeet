@@ -39,9 +39,9 @@ export default function NotFound() {
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/dictionary">
+              <Link href="/learn/vocabulary">
                 <Search />
-                Dictionary
+                Vocabulary
               </Link>
             </Button>
           </div>

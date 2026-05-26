@@ -23,7 +23,6 @@ export default function AppNavbar() {
             <NavLink href="/learn">Learn</NavLink>
             <NavLink href="/learn/lessons">Lessons</NavLink>
             <NavLink href="/learn/vocabulary">Vocabulary</NavLink>
-            <NavLink href="/dictionary">Dictionary</NavLink>
             <NavLink href="/news">News</NavLink>
             <AppNavbarUserLinks />
           </nav>

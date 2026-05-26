@@ -72,7 +72,39 @@ type VocabularyCursor = {
   id: string;
 };
 
+type VocabularyQueryError = {
+  code?: string;
+  details?: string;
+  hint?: string;
+  message?: string;
+};
+
 export const VOCABULARY_PAGE_SIZE = 50;
+
+const VOCABULARY_SELECT = `
+  id,
+  word,
+  slug,
+  normalized_word,
+  definition,
+  definition_th,
+  example_sentence,
+  example_sentence_th,
+  part_of_speech,
+  cefr_level,
+  difficulty,
+  frequency_rank,
+  phonetic,
+  tags,
+  is_toeic,
+  is_oxford,
+  image_url,
+  tts_audio_url,
+  source,
+  source_url,
+  license,
+  review_status
+`;
 
 const CEFR_LEVELS: readonly CefrLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const PARTS_OF_SPEECH: readonly PartOfSpeech[] = [
@@ -101,6 +133,13 @@ function isCefrLevel(value: string): value is CefrLevel {
 
 function isPartOfSpeech(value: string): value is PartOfSpeech {
   return PARTS_OF_SPEECH.includes(value as PartOfSpeech);
+}
+
+function sanitizeIlikeValue(value: string) {
+  return value
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function decodeVocabularyCursor(value: string | null) {
@@ -151,6 +190,21 @@ function getNextVocabularyCursor(items: VocabularyItem[], hasMore: boolean) {
 
   const lastItem = items.at(-1);
   return lastItem ? encodeVocabularyCursor(lastItem) : null;
+}
+
+export function shouldFallbackFromVocabularyRpc(error: VocabularyQueryError) {
+  const message = [error.code, error.message, error.details, error.hint]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    error.code === "PGRST202" ||
+    error.code === "42883" ||
+    message.includes("could not find the function") ||
+    message.includes("function public.") ||
+    message.includes("operator does not exist")
+  );
 }
 
 export function parseVocabularyFilters(
@@ -265,6 +319,103 @@ function toVocabularyItem(row: VocabularyResultRow): VocabularyItem {
   };
 }
 
+async function queryVocabularyTablePageData({
+  supabase,
+  filters,
+  offset,
+  savedVocabularyIds,
+  availableTags,
+}: {
+  supabase: SupabaseClient<Database>;
+  filters: VocabularyFilters;
+  offset: number;
+  savedVocabularyIds: string[];
+  availableTags: string[];
+}): Promise<VocabularyPageData> {
+  const savedIdSet = new Set(savedVocabularyIds);
+
+  if (filters.savedOnly && savedVocabularyIds.length === 0) {
+    return {
+      items: [],
+      savedVocabularyIds,
+      availableTags,
+      total: 0,
+      nextCursor: null,
+      error: null,
+    };
+  }
+
+  let query = supabase
+    .from("vocabulary")
+    .select(VOCABULARY_SELECT, { count: "exact" })
+    .eq("status", "published")
+    .eq("review_status", "approved")
+    .order("frequency_rank", { ascending: true, nullsFirst: false })
+    .order("word", { ascending: true })
+    .range(offset, offset + VOCABULARY_PAGE_SIZE - 1);
+
+  if (filters.q) {
+    const search = sanitizeIlikeValue(filters.q);
+    if (search) {
+      query = query.or(
+        `word.ilike.%${search}%,normalized_word.ilike.%${search}%,definition.ilike.%${search}%,definition_th.ilike.%${search}%`,
+      );
+    }
+  }
+
+  if (filters.level !== "all") {
+    query = query.eq("cefr_level", filters.level);
+  }
+
+  if (filters.part !== "all") {
+    query = query.eq("part_of_speech", filters.part);
+  }
+
+  if (filters.tag) {
+    query = query.contains("tags", [filters.tag]);
+  }
+
+  if (filters.list === "toeic") {
+    query = query.eq("is_toeic", true);
+  }
+
+  if (filters.list === "oxford") {
+    query = query.eq("is_oxford", true);
+  }
+
+  if (filters.difficulty) {
+    query = query.eq("difficulty", filters.difficulty);
+  }
+
+  if (filters.savedOnly) {
+    query = query.in("id", savedVocabularyIds);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    return {
+      items: [],
+      savedVocabularyIds,
+      availableTags,
+      total: 0,
+      nextCursor: null,
+      error: "Unable to load vocabulary right now.",
+    };
+  }
+
+  return {
+    items: (data ?? []).filter((item) =>
+      filters.savedOnly ? savedIdSet.has(item.id) : true,
+    ) as VocabularyItem[],
+    savedVocabularyIds,
+    availableTags,
+    total: count ?? data?.length ?? 0,
+    nextCursor: null,
+    error: null,
+  };
+}
+
 async function searchVocabularyPageData({
   supabase,
   filters,
@@ -294,6 +445,16 @@ async function searchVocabularyPageData({
   });
 
   if (error) {
+    if (shouldFallbackFromVocabularyRpc(error)) {
+      return queryVocabularyTablePageData({
+        supabase,
+        filters,
+        offset,
+        savedVocabularyIds,
+        availableTags,
+      });
+    }
+
     return {
       items: [],
       savedVocabularyIds,
@@ -320,6 +481,7 @@ async function listVocabularyPageData({
   supabase,
   filters,
   userId,
+  offset,
   cursor,
   savedVocabularyIds,
   availableTags,
@@ -327,6 +489,7 @@ async function listVocabularyPageData({
   supabase: SupabaseClient<Database>;
   filters: VocabularyFilters;
   userId: string | null;
+  offset: number;
   cursor: VocabularyCursor | null;
   savedVocabularyIds: string[];
   availableTags: string[];
@@ -346,6 +509,16 @@ async function listVocabularyPageData({
   });
 
   if (error) {
+    if (shouldFallbackFromVocabularyRpc(error)) {
+      return queryVocabularyTablePageData({
+        supabase,
+        filters,
+        offset,
+        savedVocabularyIds,
+        availableTags,
+      });
+    }
+
     return {
       items: [],
       savedVocabularyIds,
@@ -418,6 +591,7 @@ export async function getVocabularyPageData({
     supabase,
     filters,
     userId,
+    offset: safeOffset,
     cursor,
     savedVocabularyIds,
     availableTags,

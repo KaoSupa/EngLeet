@@ -27,7 +27,7 @@ const HERO_SLIDES = [
   },
   {
     title: "Vocabulary first",
-    subtitle: "คำศัพท์เดียว ใช้ซ้ำได้ทั้ง lesson, news และ dictionary",
+    subtitle: "คำศัพท์เดียว ใช้ซ้ำได้ทั้ง lesson, news และ selection lookup",
     detail:
       "คลังคำศัพท์กลางช่วยให้การเรียนเชื่อมกันทั้งระบบ ตั้งแต่ TOEIC ไปจนถึงบทอ่านชีวิตประจำวัน",
     image:

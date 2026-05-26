@@ -67,7 +67,7 @@ export default async function Home() {
             <FeaturePanel
               icon={<BookMarked />}
               title="คลังคำศัพท์กลาง"
-              description="คำศัพท์เดียวสามารถผูกกับ lesson, dictionary และ content อื่นในอนาคต"
+              description="คำศัพท์เดียวสามารถผูกกับ lesson, news และ popup แปลคำจากการคลุมข้อความ"
             />
             <FeaturePanel
               icon={<Search />}

@@ -54,3 +54,15 @@ export function trackVocabularySave(properties: {
     part_of_speech: properties.partOfSpeech,
   });
 }
+
+export function trackVocabularyReview(properties: {
+  vocabularyId: string;
+  word: string;
+  quality: number;
+}) {
+  sendAnalyticsEvent("vocabulary_review", {
+    vocabulary_id: properties.vocabularyId,
+    word: properties.word,
+    quality: properties.quality,
+  });
+}

@@ -10,6 +10,8 @@ import path from "node:path";
 import process from "node:process";
 import { x as extractTar } from "tar";
 
+import { exampleSentenceForVocabularyEntry } from "./vocabulary-example-sentences.mjs";
+
 const DATA_DIR = path.join(process.cwd(), "data", "vocabulary");
 const OUTPUT_FILE = path.join(DATA_DIR, "wordnet-bulk-001.json");
 const WORDNET_CACHE_DIR = path.join(process.cwd(), ".cache", "wordnet-3.0");
@@ -452,22 +454,6 @@ function difficultyForCefr(cefr) {
   return { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 5 }[cefr] ?? 3;
 }
 
-function originalExample(word, partOfSpeech) {
-  if (partOfSpeech === "verb") {
-    return `Learners often practice the verb "${word}" in short conversations.`;
-  }
-
-  if (partOfSpeech === "adjective") {
-    return `Learners can use "${word}" to describe people, places, or ideas.`;
-  }
-
-  if (partOfSpeech === "adverb") {
-    return `Learners can use "${word}" to add detail to a sentence.`;
-  }
-
-  return `Learners often meet the word "${word}" in everyday English.`;
-}
-
 function buildRows(candidates, existingKeys, generatedAt) {
   const available = candidates.filter(
     (candidate) =>
@@ -526,7 +512,12 @@ function buildRows(candidates, existingKeys, generatedAt) {
         difficulty: difficultyForCefr(cefr),
         definition: candidate.definition,
         definition_th: candidate.definitionTh,
-        example_sentence: originalExample(candidate.word, candidate.partOfSpeech),
+        example_sentence: exampleSentenceForVocabularyEntry({
+          word: candidate.word,
+          part_of_speech: candidate.partOfSpeech,
+          definition: candidate.definition,
+          wordnetExample: candidate.wordnetExample,
+        }),
         example_sentence_th: null,
         frequency_rank: rank,
         tags: Array.from(tags).sort(),
@@ -566,7 +557,7 @@ async function main() {
       generated_at: generatedAt,
       generator: "scripts/generate-wordnet-vocabulary-seed.mjs",
       note:
-        "Generated from WordNet 3.0 lemmas and glosses. Thai definitions are matched by Open Multilingual WordNet synset IDs when available. Examples are original Engleet template sentences. Oxford-style and TOEIC-focused flags are Engleet curation labels, not official Oxford or ETS material.",
+        "Generated from WordNet 3.0 lemmas and glosses. Thai definitions are matched by Open Multilingual WordNet synset IDs when available. Examples use WordNet examples when suitable, with Engleet contextual fallbacks. Oxford-style and TOEIC-focused flags are Engleet curation labels, not official Oxford or ETS material.",
       counts: {
         total: entries.length,
         published_with_thai: entries.filter((entry) => entry.definition_th)

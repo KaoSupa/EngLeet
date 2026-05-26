@@ -18,6 +18,10 @@ export const metadata: Metadata = {
     "Search and filter English vocabulary by level, part of speech, tags, TOEIC, Oxford, and difficulty.",
 };
 
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default async function VocabularyPage({
   searchParams,
 }: {
@@ -25,6 +29,8 @@ export default async function VocabularyPage({
 }) {
   const params = await searchParams;
   const filters = parseVocabularyFilters(params);
+  const initialViewMode =
+    firstParam(params.view) === "flashcards" ? "flashcards" : "browse";
   const supabase = await createClient();
   const user = await getOptionalApiUser(supabase);
   const data = await getVocabularyPageData({
@@ -60,6 +66,8 @@ export default async function VocabularyPage({
           isAuthenticated={Boolean(user)}
           total={data.total}
           initialNextCursor={data.nextCursor}
+          initialViewMode={initialViewMode}
+          enableFlashcards
           error={data.error}
         />
       </div>
