@@ -101,7 +101,7 @@ export default async function LessonDetailPage({ params }: LessonRouteProps) {
               )}
             </div>
 
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+            <h1 className="text-3xl font-semibold sm:text-5xl">
               {lesson.title}
             </h1>
             {lesson.description && (

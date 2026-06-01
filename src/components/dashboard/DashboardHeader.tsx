@@ -25,7 +25,7 @@ export function DashboardHeader({
       <p className="text-sm font-medium text-muted-foreground">Dashboard</p>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-bold sm:text-4xl">
           Welcome back, {displayName}
         </h1>
 

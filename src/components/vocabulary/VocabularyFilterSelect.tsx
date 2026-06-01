@@ -22,7 +22,7 @@ export function VocabularyFilterSelect({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
-        className="h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50"
+        className="focus-ring h-11 w-full rounded-lg border bg-background/80 px-3 text-sm outline-none transition focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
       >
         {children}
       </select>

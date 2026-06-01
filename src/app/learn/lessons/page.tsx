@@ -33,21 +33,26 @@ export default async function LessonsPage({
   const { lessons, error } = await getPublishedLessons(supabase, filters);
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8 sm:px-6">
+    <main className="min-h-screen bg-transparent px-4 py-8 sm:px-6 lg:py-10">
       <div className="mx-auto max-w-6xl space-y-8">
-        <section className="space-y-3">
-          <p className="text-sm font-medium text-primary">Lessons</p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            เรียนเป็นบทสั้น ทำ quiz แล้วเก็บ XP
-          </h1>
-          <p className="max-w-2xl text-muted-foreground">
-            เลือกบทเรียนตามระดับและหัวข้อที่อยากฝึก เนื้อหาหน้านี้เปิดอ่านได้
-            ส่วน progress และคะแนน quiz จะถูกบันทึกเมื่อเข้าสู่ระบบ
-          </p>
+        <section className="surface-panel p-6 md:p-8">
+          <div className="max-w-3xl space-y-3">
+            <p className="eyebrow">
+              <BookOpen className="size-4" />
+              Lessons
+            </p>
+            <h1 className="text-balance text-3xl font-semibold sm:text-4xl">
+              เรียนเป็นบทสั้น ทำ quiz แล้วเก็บ XP
+            </h1>
+            <p className="leading-7 text-muted-foreground">
+              เลือกบทเรียนตามระดับและหัวข้อที่อยากฝึก เนื้อหาหน้านี้เปิดอ่านได้
+              ส่วน progress และคะแนน quiz จะถูกบันทึกเมื่อเข้าสู่ระบบ
+            </p>
+          </div>
         </section>
 
         {error && (
-          <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
+          <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
             โหลดบทเรียนไม่สำเร็จ
           </div>
         )}
@@ -62,21 +67,21 @@ export default async function LessonsPage({
               <Link
                 key={lesson.id}
                 href={`/learn/lessons/${lesson.slug}`}
-                className="group flex min-h-64 flex-col overflow-hidden rounded-lg border bg-card shadow-sm transition-colors hover:bg-muted/40"
+                className="interactive-card group flex min-h-64 flex-col overflow-hidden"
               >
                 {lesson.thumbnail_url ? (
-                  <div className="relative h-36 w-full bg-muted">
+                  <div className="relative h-36 w-full overflow-hidden bg-muted">
                     <SafeImage
                       src={lesson.thumbnail_url}
                       alt=""
                       fill
                       sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      className="object-cover"
+                      className="object-cover transition duration-300 group-hover:scale-105"
                     />
                   </div>
                 ) : (
-                  <div className="flex h-36 items-center justify-center bg-muted">
-                    <BookOpen className="size-8 text-muted-foreground" />
+                  <div className="flex h-36 items-center justify-center bg-primary/10">
+                    <BookOpen className="size-8 text-primary" />
                   </div>
                 )}
 
@@ -92,11 +97,11 @@ export default async function LessonsPage({
                     </LearningBadge>
                   </div>
 
-                  <h2 className="mt-4 text-lg font-semibold group-hover:text-primary">
+                  <h2 className="mt-4 text-lg font-semibold transition group-hover:text-primary">
                     {lesson.title}
                   </h2>
                   {lesson.description && (
-                    <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
                       {lesson.description}
                     </p>
                   )}
@@ -124,9 +129,9 @@ export default async function LessonsPage({
 
 function EmptyLessons() {
   return (
-    <section className="rounded-lg border bg-card p-8">
+    <section className="surface-panel p-8">
       <h2 className="text-xl font-semibold">ยังไม่มีบทเรียนที่เผยแพร่</h2>
-      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+      <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
         เมื่อผู้ดูแลเพิ่มและ publish lesson แล้ว รายการจะปรากฏที่นี่ทันที
       </p>
     </section>

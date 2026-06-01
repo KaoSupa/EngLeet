@@ -16,7 +16,7 @@ export default function NotFound() {
         <div className="space-y-6">
           <p className="text-sm font-medium text-primary">404</p>
           <div className="space-y-4">
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-6xl">
+            <h1 className="text-4xl font-semibold sm:text-6xl">
               This page slipped out of the lesson plan.
             </h1>
             <p className="max-w-xl text-muted-foreground">
@@ -50,7 +50,7 @@ export default function NotFound() {
         <div className="rounded-lg border bg-card p-6 shadow-sm">
           <div className="grid aspect-square place-items-center rounded-lg bg-muted">
             <div className="space-y-2 text-center">
-              <p className="text-8xl font-semibold tracking-tight">404</p>
+              <p className="text-8xl font-semibold">404</p>
               <p className="text-sm text-muted-foreground">Page not found</p>
             </div>
           </div>

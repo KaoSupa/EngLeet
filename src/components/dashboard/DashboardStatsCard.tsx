@@ -74,7 +74,7 @@ export function DashboardStatCard({
             key={String(value)}
             initial={reduceMotion ? false : { scale: 0.96 }}
             animate={reduceMotion ? undefined : { scale: 1 }}
-            className="mt-2 text-4xl font-bold tracking-tight"
+            className="mt-2 text-4xl font-bold"
           >
             {value}
           </motion.p>

@@ -72,10 +72,10 @@ export default function LessonFilters({
   }, [filters.q, query]);
 
   return (
-    <section className="rounded-lg border bg-card p-4 shadow-sm">
+    <section className="surface-panel p-4 sm:p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm font-semibold">
             <Filter className="size-4" />
             Lesson tools
           </div>
@@ -102,7 +102,7 @@ export default function LessonFilters({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search lessons"
-            className="h-10 w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+            className="focus-ring h-11 w-full rounded-lg border bg-background/80 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-ring"
           />
         </label>
 
@@ -111,7 +111,7 @@ export default function LessonFilters({
           <select
             value={filters.level}
             onChange={(event) => updateFilters({ level: event.target.value })}
-            className="h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+            className="focus-ring h-11 w-full rounded-lg border bg-background/80 px-3 text-sm outline-none transition focus:border-ring"
           >
             <option value="all">All levels</option>
             {LESSON_LEVELS.map((level) => (
@@ -129,7 +129,7 @@ export default function LessonFilters({
             onChange={(event) =>
               updateFilters({ category: event.target.value })
             }
-            className="h-10 w-full rounded-lg border bg-background px-3 text-sm capitalize outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+            className="focus-ring h-11 w-full rounded-lg border bg-background/80 px-3 text-sm capitalize outline-none transition focus:border-ring"
           >
             <option value="all">All categories</option>
             {LESSON_CATEGORIES.map((category) => (

@@ -182,26 +182,28 @@ export function VocabularyFlashcards({
   return (
     <section
       aria-label="Flashcard practice"
-      className="space-y-4 rounded-lg border bg-card p-4 shadow-sm"
+      className="surface-panel space-y-5 p-4 sm:p-5"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Brain className="h-4 w-4" />
-            Flashcards
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="icon-tile">
+            <Brain className="h-5 w-5" />
           </div>
-          <div className="flex flex-wrap gap-2">
-            <VocabularyBadge tone="source">
-              {safeActiveIndex + 1}/{items.length} loaded
-            </VocabularyBadge>
-            <VocabularyBadge tone="neutral">{total} matching</VocabularyBadge>
-            {currentReview && (
-              <VocabularyBadge
-                tone={currentReview >= 5 ? "difficulty" : "category"}
-              >
-                {getQualityLabel(currentReview)}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold">Flashcards</div>
+            <div className="flex flex-wrap gap-2">
+              <VocabularyBadge tone="source">
+                {safeActiveIndex + 1}/{items.length} loaded
               </VocabularyBadge>
-            )}
+              <VocabularyBadge tone="neutral">{total} matching</VocabularyBadge>
+              {currentReview && (
+                <VocabularyBadge
+                  tone={currentReview >= 5 ? "difficulty" : "category"}
+                >
+                  {getQualityLabel(currentReview)}
+                </VocabularyBadge>
+              )}
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm sm:flex sm:items-center">
@@ -222,8 +224,9 @@ export function VocabularyFlashcards({
           aria-pressed={isFlipped}
           aria-label={`Flip flashcard for ${currentItem.word}`}
           onClick={() => setIsFlipped((current) => !current)}
-          className="flex min-h-[360px] flex-col rounded-lg border bg-background p-5 text-left shadow-sm transition hover:border-foreground/20 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+          className="focus-ring relative flex min-h-[360px] flex-col overflow-hidden rounded-lg border bg-background/85 p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/10"
         >
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-secondary" />
           <div className="flex flex-wrap items-center gap-2">
             {currentItem.part_of_speech && (
               <VocabularyBadge tone="part">
@@ -248,7 +251,7 @@ export function VocabularyFlashcards({
                 <p className="text-sm font-medium text-muted-foreground">
                   Word
                 </p>
-                <h2 className="break-words text-4xl font-semibold tracking-tight sm:text-5xl">
+                <h2 className="break-words text-4xl font-semibold sm:text-5xl">
                   {currentItem.word}
                 </h2>
                 {currentItem.phonetic && (
@@ -264,12 +267,12 @@ export function VocabularyFlashcards({
                 </p>
                 <p className="text-xl leading-8">{currentItem.definition}</p>
                 {currentItem.definition_th && (
-                  <p className="rounded-lg bg-muted px-3 py-2 text-base">
+                  <p className="rounded-lg bg-accent/70 px-3 py-2 text-base text-accent-foreground">
                     {currentItem.definition_th}
                   </p>
                 )}
                 {currentItem.example_sentence && (
-                  <p className="border-l-2 pl-3 text-sm italic leading-6 text-muted-foreground">
+                  <p className="border-l-2 border-primary/40 pl-3 text-sm italic leading-6 text-muted-foreground">
                     {currentItem.example_sentence}
                   </p>
                 )}

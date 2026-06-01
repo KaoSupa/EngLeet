@@ -23,11 +23,12 @@ export function VocabularyCard({
   onSave,
 }: VocabularyCardProps) {
   return (
-    <article className="flex min-h-[280px] flex-col rounded-lg border bg-card p-5 shadow-sm transition hover:border-foreground/20 hover:shadow-md">
+    <article className="interactive-card relative flex min-h-[280px] flex-col overflow-hidden p-5">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-secondary" />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="truncate text-2xl font-semibold">{item.word}</h2>
+            <h2 className="break-words text-2xl font-semibold">{item.word}</h2>
             {item.phonetic && (
               <span className="text-sm text-muted-foreground">
                 {item.phonetic}
@@ -59,10 +60,10 @@ export function VocabularyCard({
           onClick={onSave}
           disabled={isSaved || isSaving}
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition",
+            "focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition",
             isSaved
               ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
-              : "hover:bg-muted",
+              : "bg-background/70 hover:border-primary/35 hover:bg-muted",
           )}
           aria-label={isSaved ? "Vocabulary saved" : "Save vocabulary"}
         >
@@ -81,13 +82,13 @@ export function VocabularyCard({
       </p>
 
       {item.definition_th && (
-        <p className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm">
+        <p className="mt-3 rounded-lg bg-accent/70 px-3 py-2 text-sm text-accent-foreground">
           {item.definition_th}
         </p>
       )}
 
       {item.example_sentence && (
-        <p className="mt-4 line-clamp-2 border-l-2 pl-3 text-sm italic text-muted-foreground">
+        <p className="mt-4 line-clamp-2 border-l-2 border-primary/40 pl-3 text-sm italic leading-6 text-muted-foreground">
           {item.example_sentence}
         </p>
       )}

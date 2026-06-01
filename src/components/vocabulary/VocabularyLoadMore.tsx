@@ -24,7 +24,8 @@ export function VocabularyLoadMore({
   return (
     <div className="flex flex-col items-center gap-3 border-t pt-6">
       <p className="text-sm text-muted-foreground">
-        แสดง {loadedCount} จาก {total} คำ
+        แสดง {loadedCount.toLocaleString("en-US")} จาก{" "}
+        {total.toLocaleString("en-US")} คำ
       </p>
       {hasMore && (
         <Button

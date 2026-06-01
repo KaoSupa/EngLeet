@@ -59,7 +59,7 @@ export default function NewsFilters({
   }, [filters.q, query]);
 
   return (
-    <section className="space-y-2 rounded-lg border bg-card p-4 shadow-sm">
+    <section className="surface-panel space-y-2 p-4 sm:p-5">
       <div className="grid gap-3 md:grid-cols-[1fr_220px]">
         <label className="relative">
           <span className="sr-only">Search news</span>
@@ -68,13 +68,13 @@ export default function NewsFilters({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search news"
-            className="h-10 w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+            className="focus-ring h-11 w-full rounded-lg border bg-background/80 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-ring"
           />
         </label>
         <select
           value={filters.category}
           onChange={(event) => updateFilters({ category: event.target.value })}
-          className="h-10 w-full rounded-lg border bg-background px-3 text-sm capitalize outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+          className="focus-ring h-11 w-full rounded-lg border bg-background/80 px-3 text-sm capitalize outline-none transition focus:border-ring"
         >
           {GNEWS_CATEGORIES.map((category) => (
             <option key={category} value={category}>

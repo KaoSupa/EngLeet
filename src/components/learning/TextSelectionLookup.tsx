@@ -42,7 +42,7 @@ type SelectionSnapshot = {
 };
 
 const LOOKUP_DELAY_MS = 180;
-const POPUP_MAX_WIDTH = 360;
+const POPUP_MAX_WIDTH = 380;
 const POPUP_MARGIN = 12;
 
 export default function TextSelectionLookup() {
@@ -185,7 +185,7 @@ export default function TextSelectionLookup() {
       data-text-lookup-popup
       role="dialog"
       aria-label="Selected text lookup"
-      className="fixed z-[70] rounded-lg border bg-popover text-popover-foreground shadow-2xl"
+      className="fixed z-[70]"
       style={{
         left: popup.left,
         top: popup.top,
@@ -193,39 +193,41 @@ export default function TextSelectionLookup() {
         transform: popup.placement === "above" ? "translateY(-100%)" : "none",
       }}
     >
-      <div className="flex items-start justify-between gap-3 border-b px-4 py-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Sparkles className="size-3.5" />
-            Selection lookup
+      <div className="animate-pop-in overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-2xl shadow-primary/20">
+        <div className="flex items-start justify-between gap-3 border-b bg-muted/45 px-4 py-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-xs font-medium text-primary">
+              <Sparkles className="size-3.5" />
+              Selection lookup
+            </div>
+            <p className="mt-1 truncate font-semibold">{popup.text}</p>
           </div>
-          <p className="mt-1 truncate font-semibold">{popup.text}</p>
+          <button
+            type="button"
+            onClick={closePopup}
+            className="focus-ring rounded-md p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+            aria-label="Close selected text lookup"
+          >
+            <X className="size-4" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={closePopup}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Close selected text lookup"
-        >
-          <X className="size-4" />
-        </button>
-      </div>
 
-      <div className="space-y-3 px-4 py-3 text-sm">
-        {popup.status === "loading" && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            กำลังค้นคำแปล...
-          </div>
-        )}
+        <div className="space-y-3 px-4 py-3 text-sm" aria-live="polite">
+          {popup.status === "loading" && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              กำลังค้นคำแปล...
+            </div>
+          )}
 
-        {popup.status === "error" && (
-          <p className="text-destructive">{popup.error}</p>
-        )}
+          {popup.status === "error" && (
+            <p className="text-destructive">{popup.error}</p>
+          )}
 
-        {popup.status === "ready" && popup.data && (
-          <LookupResultContent data={popup.data} onNavigate={closePopup} />
-        )}
+          {popup.status === "ready" && popup.data && (
+            <LookupResultContent data={popup.data} onNavigate={closePopup} />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -241,7 +243,7 @@ function LookupResultContent({
   if (data.matches.length === 0) {
     return (
       <div className="space-y-3">
-        <p className="text-muted-foreground">
+        <p className="leading-6 text-muted-foreground">
           ยังไม่พบคำนี้ในคลังคำศัพท์ของ Engleet
         </p>
         <Button asChild variant="outline" className="w-full">
@@ -260,8 +262,8 @@ function LookupResultContent({
   return (
     <div className="space-y-3">
       {data.translation && (
-        <div className="rounded-lg bg-muted px-3 py-2">
-          <p className="text-xs font-medium text-muted-foreground">คำแปล</p>
+        <div className="rounded-lg bg-accent/70 px-3 py-2 text-accent-foreground">
+          <p className="text-xs font-medium opacity-75">คำแปล</p>
           <p className="mt-1 leading-6">{data.translation}</p>
         </div>
       )}
@@ -316,7 +318,7 @@ function ExactMatch({
 
       <p className="leading-6 text-muted-foreground">{item.definition}</p>
       {item.example_sentence && (
-        <p className="border-l-2 pl-3 text-xs italic leading-5 text-muted-foreground">
+        <p className="border-l-2 border-primary/40 pl-3 text-xs italic leading-5 text-muted-foreground">
           {item.example_sentence}
         </p>
       )}
@@ -346,7 +348,7 @@ function LookupMatchLink({
     <Link
       href={`/learn/vocabulary?q=${encodeURIComponent(item.word)}`}
       onClick={onNavigate}
-      className="block rounded-lg border px-3 py-2 transition hover:bg-muted"
+      className="block rounded-lg border bg-background/70 px-3 py-2 transition hover:border-primary/35 hover:bg-muted"
     >
       <div className="flex items-center justify-between gap-3">
         <span className="font-medium">{item.word}</span>

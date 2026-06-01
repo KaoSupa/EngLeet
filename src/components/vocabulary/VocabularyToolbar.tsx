@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import type { FormEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { CircleX, Filter, Search } from "lucide-react";
+import { CircleX, Filter, Search, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { VocabularyFilters } from "@/lib/learning/vocabulary";
@@ -55,7 +55,10 @@ export function VocabularyToolbar({
     });
 
     startTransition(() => {
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      const queryString = params.toString();
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+        scroll: false,
+      });
     });
   }
 
@@ -81,18 +84,22 @@ export function VocabularyToolbar({
     filters.savedOnly;
 
   return (
-    <section className="space-y-4 rounded-lg border bg-card p-4 shadow-sm">
+    <section className="surface-panel space-y-5 p-4 sm:p-5" aria-busy={isPending}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Filter className="h-4 w-4" />
-            Vocabulary tools
+        <div className="flex items-start gap-3">
+          <div className="icon-tile">
+            <SlidersHorizontal className="h-5 w-5" />
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isPending
-              ? "กำลังค้นหา..."
-              : `${total} คำศัพท์ที่ตรงกับตัวกรอง`}
-          </p>
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              Vocabulary tools
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {isPending
+                ? "กำลังค้นหา..."
+                : `${total.toLocaleString("en-US")} คำศัพท์ที่ตรงกับตัวกรอง`}
+            </p>
+          </div>
         </div>
 
         {hasActiveFilters && (
@@ -106,15 +113,15 @@ export function VocabularyToolbar({
       <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row">
         <label className="relative flex-1">
           <span className="sr-only">Search vocabulary</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search word, definition, or Thai meaning"
-            className="h-10 w-full rounded-lg border bg-background py-2 pl-9 pr-3 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/30"
+            className="focus-ring h-11 w-full rounded-lg border bg-background/80 py-2 pl-10 pr-3 text-sm outline-none transition focus:border-ring"
           />
         </label>
-        <Button type="submit" className="h-10 px-4">
+        <Button type="submit" className="h-11 px-5">
           <Search className="h-4 w-4" />
           Search
         </Button>
@@ -192,6 +199,11 @@ export function VocabularyToolbar({
           <option value="all">All words</option>
           <option value="1">Saved only</option>
         </VocabularyFilterSelect>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <Filter className="size-3.5" />
+        Filters are applied instantly without losing the current view mode.
       </div>
     </section>
   );

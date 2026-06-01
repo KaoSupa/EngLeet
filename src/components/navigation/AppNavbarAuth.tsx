@@ -79,7 +79,7 @@ export function AppNavbarAccount() {
   const user = useNavbarUser();
 
   if (user === undefined) {
-    return <div className="h-10 w-28 rounded-lg border bg-muted/50" />;
+    return <div className="h-10 w-28 animate-pulse rounded-lg border bg-muted/60" />;
   }
 
   if (user) {
@@ -97,13 +97,70 @@ export function AppNavbarAccount() {
     <div className="flex items-center gap-2">
       <Link
         href="/login"
-        className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
       >
         Login
       </Link>
       <Link
         href="/register"
-        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary/90"
+      >
+        Sign up
+      </Link>
+    </div>
+  );
+}
+
+export function AppNavbarMobileAccount({
+  onNavigate,
+}: {
+  onNavigate: () => void;
+}) {
+  const user = useNavbarUser();
+
+  if (user === undefined) {
+    return <div className="mt-1 h-20 animate-pulse rounded-lg border bg-muted/60" />;
+  }
+
+  if (user) {
+    return (
+      <div className="mt-1 grid gap-2 border-t pt-3">
+        <div className="rounded-lg bg-card px-3 py-2">
+          <p className="truncate text-sm font-medium">{user.displayName}</p>
+          {user.email && (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {user.email}
+            </p>
+          )}
+        </div>
+        <NavLink href="/dashboard" onNavigate={onNavigate}>
+          Dashboard
+        </NavLink>
+        <NavLink href="/learn/vocabulary" onNavigate={onNavigate}>
+          Vocabulary
+        </NavLink>
+        {user.role === "admin" && (
+          <NavLink href="/admin" onNavigate={onNavigate}>
+            Admin
+          </NavLink>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 grid grid-cols-2 gap-2 border-t pt-3">
+      <Link
+        href="/login"
+        onClick={onNavigate}
+        className="rounded-lg border bg-card px-3 py-2 text-center text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+      >
+        Login
+      </Link>
+      <Link
+        href="/register"
+        onClick={onNavigate}
+        className="rounded-lg bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground shadow-sm shadow-primary/20 transition hover:bg-primary/90"
       >
         Sign up
       </Link>
@@ -114,14 +171,17 @@ export function AppNavbarAccount() {
 function NavLink({
   href,
   children,
+  onNavigate,
 }: {
   href: string;
   children: React.ReactNode;
+  onNavigate?: () => void;
 }) {
   return (
     <Link
       href={href}
-      className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      onClick={onNavigate}
+      className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
     >
       {children}
     </Link>

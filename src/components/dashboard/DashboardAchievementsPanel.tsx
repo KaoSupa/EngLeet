@@ -14,7 +14,7 @@ export function DashboardAchievementsPanel() {
       className="rounded-3xl border bg-card p-8 shadow-sm"
     >
       <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight">Achievements</h2>
+        <h2 className="text-3xl font-bold">Achievements</h2>
         <p className="mt-1 text-muted-foreground">
           Unlock badges by completing lessons and quizzes.
         </p>

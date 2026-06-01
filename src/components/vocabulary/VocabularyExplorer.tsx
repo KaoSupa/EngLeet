@@ -43,6 +43,10 @@ type VocabularyPageResponse = {
 
 type VocabularyViewMode = "browse" | "flashcards";
 
+const SAVE_ERROR_MESSAGE = "บันทึกคำศัพท์ไม่สำเร็จ โปรดลองใหม่อีกครั้ง";
+const REVIEW_ERROR_MESSAGE = "บันทึกผลทบทวนไม่สำเร็จ โปรดลองใหม่อีกครั้ง";
+const LOAD_MORE_ERROR_MESSAGE = "โหลดคำศัพท์เพิ่มไม่สำเร็จ โปรดลองใหม่อีกครั้ง";
+
 export default function VocabularyExplorer({
   items,
   filters,
@@ -122,7 +126,7 @@ export default function VocabularyExplorer({
       }
 
       if (!response.ok) {
-        setSaveError("บันทึกคำศัพท์ไม่สำเร็จ โปรดลองใหม่อีกครั้ง");
+        setSaveError(SAVE_ERROR_MESSAGE);
         return;
       }
 
@@ -136,7 +140,7 @@ export default function VocabularyExplorer({
         partOfSpeech: vocabulary.part_of_speech,
       });
     } catch {
-      setSaveError("บันทึกคำศัพท์ไม่สำเร็จ โปรดลองใหม่อีกครั้ง");
+      setSaveError(SAVE_ERROR_MESSAGE);
     } finally {
       setSavingId(null);
     }
@@ -188,7 +192,7 @@ export default function VocabularyExplorer({
       });
       return true;
     } catch {
-      setReviewError("บันทึกผลทบทวนไม่สำเร็จ โปรดลองใหม่อีกครั้ง");
+      setReviewError(REVIEW_ERROR_MESSAGE);
       return false;
     } finally {
       setReviewingId(null);
@@ -215,7 +219,7 @@ export default function VocabularyExplorer({
       const response = await fetch(`/api/learning/vocabulary?${params}`);
 
       if (!response.ok) {
-        setLoadMoreError("โหลดคำศัพท์เพิ่มไม่สำเร็จ โปรดลองใหม่อีกครั้ง");
+        setLoadMoreError(LOAD_MORE_ERROR_MESSAGE);
         return;
       }
 
@@ -229,7 +233,7 @@ export default function VocabularyExplorer({
       appendUniqueItems(data.items ?? []);
       setNextCursor(data.nextCursor ?? null);
     } catch {
-      setLoadMoreError("โหลดคำศัพท์เพิ่มไม่สำเร็จ โปรดลองใหม่อีกครั้ง");
+      setLoadMoreError(LOAD_MORE_ERROR_MESSAGE);
     } finally {
       setLoadingMore(false);
     }
@@ -305,7 +309,7 @@ export default function VocabularyExplorer({
         <div
           role="group"
           aria-label="Vocabulary view"
-          className="inline-grid rounded-lg border bg-muted p-1 sm:grid-cols-2"
+          className="surface-panel inline-grid p-1 sm:grid-cols-2"
         >
           <Button
             type="button"
@@ -398,8 +402,8 @@ async function getLearningActionError(response: Response) {
     const data = (await response.json()) as { error?: unknown };
     return typeof data.error === "string"
       ? data.error
-      : "บันทึกผลทบทวนไม่สำเร็จ โปรดลองใหม่อีกครั้ง";
+      : REVIEW_ERROR_MESSAGE;
   } catch {
-    return "บันทึกผลทบทวนไม่สำเร็จ โปรดลองใหม่อีกครั้ง";
+    return REVIEW_ERROR_MESSAGE;
   }
 }
